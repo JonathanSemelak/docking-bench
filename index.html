@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docking Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.4/3Dmol-min.js"></script>
+<style>
+:root{
+  --void:#0A0E14; --panel:#10161F; --panel-2:#151E2A; --rule:#1F2B3A;
+  --mesh:#7FB2E5;          /* 2Fo-Fc density blue */
+  --pos:#4FBF8B;           /* Fo-Fc positive green */
+  --neg:#E2574C;           /* Fo-Fc negative red */
+  --amber:#E0A458;
+  --paper:#DCE5EE; --muted:#7C8DA0; --dim:#4E5F73;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --cond:'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif;
+  --body:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{
+  background:var(--void); color:var(--paper); font-family:var(--body);
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--mesh); outline-offset:2px}
+
+.eyebrow{
+  font-family:var(--cond); font-weight:600; font-size:11px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--dim);
+}
+
+/* ---------- shell ---------- */
+.app{display:flex;flex-direction:column;height:100vh;min-height:0}
+
+header{
+  display:flex;align-items:baseline;gap:20px;flex-wrap:wrap;
+  padding:14px 20px;border-bottom:1px solid var(--rule);background:var(--panel);
+}
+header h1{
+  font-family:var(--cond);font-weight:700;font-size:19px;letter-spacing:.02em;
+  margin:0;text-transform:uppercase;
+}
+header h1 span{color:var(--mesh)}
+.tabs{display:flex;gap:2px;margin-left:auto}
+.tab{
+  font-family:var(--cond);font-weight:600;font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;padding:7px 14px;color:var(--muted);
+  border:1px solid var(--rule);border-radius:2px;background:var(--panel-2);
+}
+.tab[aria-selected=true]{color:var(--void);background:var(--mesh);border-color:var(--mesh)}
+
+main{display:grid;grid-template-columns:268px minmax(0,1fr) 300px;flex:1;min-height:0}
+aside{border-right:1px solid var(--rule);overflow-y:auto;background:var(--panel)}
+.right{border-right:none;border-left:1px solid var(--rule)}
+.stage{display:flex;flex-direction:column;min-width:0;min-height:0}
+
+.sec{padding:14px 16px;border-bottom:1px solid var(--rule)}
+.sec h2{margin:0 0 10px;font:inherit}
+
+/* ---------- ligand list ---------- */
+.lig{
+  display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:baseline;
+  width:100%;text-align:left;padding:9px 16px;border-bottom:1px solid var(--rule);
+  border-left:2px solid transparent;
+}
+.lig:hover{background:var(--panel-2)}
+.lig[aria-current=true]{background:var(--panel-2);border-left-color:var(--mesh)}
+.lig-name{font-family:var(--cond);font-weight:600;font-size:14.5px;letter-spacing:.01em}
+.lig-score{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--mesh)}
+.lig-meta{grid-column:1/-1;font-size:11.5px;color:var(--dim);display:flex;gap:8px;align-items:center}
+.flag{color:var(--neg);font-family:var(--cond);font-weight:600;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+.native{color:var(--pos);font-family:var(--cond);font-weight:600;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+
+/* ---------- viewer ---------- */
+.viewer-wrap{position:relative;flex:1;min-height:0;background:var(--void)}
+#viewer{position:absolute;inset:0}
+.badge{
+  position:absolute;left:14px;top:12px;z-index:5;pointer-events:none;
+  font-family:var(--mono);font-size:11px;color:var(--muted);
+  background:rgba(10,14,20,.72);padding:5px 9px;border:1px solid var(--rule);border-radius:2px;
+}
+.badge b{color:var(--paper);font-weight:500}
+.legend{
+  position:absolute;right:14px;top:12px;z-index:5;pointer-events:none;
+  display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:10.5px;
+  background:rgba(10,14,20,.72);padding:6px 9px;border:1px solid var(--rule);border-radius:2px;
+}
+.legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:7px}
+.status{
+  position:absolute;inset:0;display:grid;place-content:center;text-align:center;
+  color:var(--muted);font-family:var(--mono);font-size:12px;gap:8px;padding:24px;
+}
+.status b{color:var(--paper);font-weight:500}
+
+/* ---------- affinity rail (signature) ---------- */
+.rail{padding:12px 18px 14px;border-top:1px solid var(--rule);background:var(--panel)}
+.rail-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
+.rail svg{display:block;width:100%;overflow:visible}
+.rail text{font-family:var(--mono);font-size:10px;fill:var(--dim)}
+.rail .tick-label{fill:var(--muted)}
+.rail .lig-tick{cursor:pointer}
+.rail .lig-tick text{font-family:var(--cond);font-size:11px;font-weight:600;fill:var(--muted)}
+.rail .lig-tick:hover text,.rail .lig-tick.on text{fill:var(--paper)}
+
+/* ---------- pose table ---------- */
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+thead th{
+  font-family:var(--cond);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);font-weight:600;text-align:right;padding:0 0 6px;border-bottom:1px solid var(--rule);
+}
+thead th:first-child{text-align:left}
+tbody td{padding:6px 0;text-align:right;border-bottom:1px solid rgba(31,43,58,.5)}
+tbody td:first-child{text-align:left}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--panel-2)}
+tbody tr[aria-current=true] td{background:var(--panel-2);color:var(--paper)}
+tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- toggles ---------- */
+.toggle{display:flex;align-items:center;gap:9px;width:100%;padding:6px 0;color:var(--muted);font-size:13px}
+.toggle:hover{color:var(--paper)}
+.box{width:13px;height:13px;border:1px solid var(--dim);border-radius:2px;flex:none;position:relative}
+.toggle[aria-pressed=true] .box{background:var(--mesh);border-color:var(--mesh)}
+.toggle[aria-pressed=true] .box::after{
+  content:'';position:absolute;left:3.5px;top:.5px;width:4px;height:8px;
+  border:solid var(--void);border-width:0 2px 2px 0;transform:rotate(43deg)
+}
+.toggle[aria-pressed=true]{color:var(--paper)}
+
+.note{font-size:12px;color:var(--dim);line-height:1.55}
+.note b{color:var(--muted);font-weight:500}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;font-family:var(--mono);color:var(--paper)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.chip{
+  font-family:var(--mono);font-size:10.5px;padding:2px 6px;border-radius:2px;
+  background:var(--panel-2);border:1px solid var(--rule);color:var(--muted)
+}
+.warn{
+  border-left:2px solid var(--neg);padding:8px 0 8px 11px;margin-top:12px;
+  font-size:12.5px;color:var(--muted);line-height:1.5
+}
+.warn b{color:var(--neg);font-family:var(--cond);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;display:block;margin-bottom:3px}
+.demo-tag{
+  font-family:var(--mono);font-size:10.5px;color:var(--amber);
+  border:1px solid rgba(224,164,88,.35);padding:2px 7px;border-radius:2px
+}
+
+/* ================= design mode ================= */
+.modes{display:flex;gap:2px;margin-left:18px}
+.mode{
+  font-family:var(--cond);font-weight:600;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;padding:6px 13px;color:var(--muted);
+  border:1px solid var(--rule);border-radius:2px;
+}
+.mode[aria-pressed=true]{color:var(--paper);background:var(--panel-2);border-color:var(--mesh)}
+
+.designWrap{display:grid;grid-template-columns:410px minmax(0,1fr);flex:1;min-height:0}
+.designWrap>*{min-width:0;overflow-y:auto}
+.dcol{border-right:1px solid var(--rule);background:var(--panel)}
+.designMid{display:flex;flex-direction:column;overflow-y:auto}
+
+/* pocket map in the design column */
+.pocketSlot{position:relative;height:clamp(330px,46vh,580px);border-bottom:1px solid var(--rule);background:var(--void)}
+.surfKey{display:flex;flex-wrap:wrap;gap:3px 12px;margin-top:9px}
+.surfKey span{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.surfKey i{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
+
+/* vector chooser */
+.vec{
+  display:block;width:100%;text-align:left;padding:11px 16px;
+  border-bottom:1px solid var(--rule);border-left:2px solid transparent;
+}
+.vec:hover{background:var(--panel-2)}
+.vec[aria-current=true]{background:var(--panel-2)}
+.vec-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.vec-id{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em}
+.vec-val{font-family:var(--mono);font-size:12.5px;color:var(--paper)}
+.vec-where{font-size:11.5px;color:var(--dim);margin-top:3px}
+
+/* structure canvas */
+/* The drawing gets a guaranteed block rather than whatever the captions leave
+   behind; on a short screen the column scrolls instead of squashing it. */
+.molStage{
+  flex:1 1 auto;min-height:clamp(300px,44vh,620px);display:flex;align-items:center;
+  justify-content:center;padding:12px 24px 0;position:relative;overflow:hidden;
+}
+#molSvg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+#molSvg svg{width:100%;height:100%;max-width:1150px;display:block}
+.molBar{
+  flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 24px 12px
+}
+.molBar .rkey{flex-wrap:wrap;justify-content:center;align-items:baseline}
+.molBar .smiles{max-width:520px}
+.molName{font-family:var(--cond);font-weight:700;font-size:17px;letter-spacing:.02em}
+.molName em{font-style:normal;color:var(--dim);font-weight:500;font-size:12.5px;margin-left:8px}
+.smiles{
+  font-family:var(--mono);font-size:10.5px;color:var(--dim);word-break:break-all;
+  text-align:center;max-width:560px;line-height:1.45
+}
+.rkey{display:flex;gap:16px;justify-content:center;font-size:11px;color:var(--muted)}
+.rkey i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}
+
+/* coaching line */
+.coach{
+  flex:none;
+  display:flex;gap:10px;align-items:flex-start;padding:10px 20px;
+  border-top:1px solid var(--rule);background:var(--panel);font-size:12.5px;color:var(--muted);
+}
+.coach b{
+  font-family:var(--cond);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  flex:none;padding-top:2px
+}
+.coach.good b{color:var(--pos)} .coach.warn b{color:var(--amber)} .coach.bad b{color:var(--neg)}
+
+/* suggestions + gallery */
+.tray{flex:none;border-top:1px solid var(--rule);background:var(--panel);padding:10px 24px 12px}
+.chips-row{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0 10px}
+.sugg{
+  font-size:12px;padding:5px 11px;border:1px solid var(--rule);border-radius:99px;
+  color:var(--muted);background:var(--panel-2);white-space:nowrap
+}
+.sugg:hover{color:var(--paper);border-color:var(--dim)}
+.sugg[aria-pressed=true]{color:var(--void);background:var(--mesh);border-color:var(--mesh);font-weight:500}
+.gallery{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px}
+  .card{
+  flex:none;width:116px;border:1px solid var(--rule);border-radius:3px;
+  background:var(--panel-2);padding:6px;text-align:left
+}
+.card:hover{border-color:var(--dim)}
+.card[aria-current=true]{border-color:var(--mesh);background:#16202C}
+.card svg{width:100%;height:60px;display:block}
+.card-l{font-family:var(--cond);font-weight:600;font-size:12px;margin-top:3px;
+  line-height:1.2;min-height:29px;overflow-wrap:anywhere}
+.card-d{font-family:var(--mono);font-size:10px;color:var(--dim);display:flex;gap:7px;margin-top:1px}
+.up{color:var(--amber)} .down{color:var(--mesh)}
+
+/* property panel */
+.prop{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 0;font-size:12.5px}
+.prop dt{color:var(--dim)}
+.prop dd{margin:0;font-family:var(--mono);color:var(--paper);display:flex;gap:7px;align-items:baseline}
+.delta{font-size:10.5px}
+.bar{height:3px;background:var(--rule);border-radius:2px;margin-top:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--mesh)}
+.bar i.over{background:var(--neg)}
+.ro5{display:flex;gap:5px;margin-top:10px}
+.ro5 span{
+  flex:1;text-align:center;font-family:var(--mono);font-size:10px;padding:3px 0;
+  border:1px solid var(--rule);border-radius:2px;color:var(--dim)
+}
+.ro5 span.bad{color:var(--neg);border-color:rgba(226,87,76,.4)}
+.ro5 span.ok{color:var(--pos);border-color:rgba(79,191,139,.3)}
+
+
+
+/* ---------- intro bar + expandable 3D ---------- */
+.intro{
+  display:flex;gap:12px;align-items:baseline;padding:9px 20px;
+  border-bottom:1px solid var(--rule);background:var(--panel);
+  font-size:12.5px;color:var(--muted);line-height:1.5
+}
+.intro b{
+  font-family:var(--cond);font-weight:600;font-size:10px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--mesh);flex:none;padding-top:2px
+}
+.expand{
+  position:absolute;top:8px;right:8px;z-index:6;font-family:var(--cond);font-weight:600;
+  font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  background:rgba(10,14,20,.78);border:1px solid var(--rule);padding:5px 10px;border-radius:2px
+}
+.expand:hover{color:var(--paper);border-color:var(--dim)}
+.fsWrap{position:fixed;inset:0;z-index:60;background:var(--void)}
+.fsSlot{position:absolute;inset:0}
+.fsBar{
+  position:absolute;top:14px;right:16px;z-index:62;display:flex;gap:8px;align-items:center
+}
+.fsCap{
+  font-family:var(--mono);font-size:11px;color:var(--muted);
+  background:rgba(10,14,20,.78);padding:5px 10px;border:1px solid var(--rule);border-radius:2px
+}
+.fsKey{
+  position:absolute;left:16px;top:14px;z-index:62;flex-direction:column;gap:4px;margin:0;
+  background:rgba(10,14,20,.78);padding:8px 11px;border:1px solid var(--rule);border-radius:2px
+}
+
+/* ---------- change feedback + docking ---------- */
+@keyframes flashIn{0%{opacity:.2;transform:scale(.985)}100%{opacity:1;transform:none}}
+.flash{animation:flashIn .34s ease-out}
+.changeTag{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);opacity:0;
+  font-family:var(--mono);font-size:11px;color:var(--void);background:var(--mesh);
+  padding:3px 11px;border-radius:99px;pointer-events:none;white-space:nowrap;z-index:4
+}
+.changeTag.on{animation:tagPop 1.7s ease-out}
+@keyframes tagPop{
+  0%{opacity:0;transform:translate(-50%,-7px)} 12%{opacity:1;transform:translate(-50%,0)}
+  68%{opacity:1;transform:translate(-50%,0)} 100%{opacity:0;transform:translate(-50%,0)}
+}
+
+.dockrow{display:flex;gap:8px;align-items:center;margin-top:4px}
+.btn{
+  font-family:var(--cond);font-weight:600;font-size:12px;letter-spacing:.09em;
+  text-transform:uppercase;padding:8px 18px;border-radius:2px;
+  background:var(--mesh);color:var(--void);border:1px solid var(--mesh)
+}
+.btn:hover{background:#96C0EA;border-color:#96C0EA}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.ghost{background:none;color:var(--muted);border-color:var(--rule);padding:8px 13px}
+.btn.ghost:hover{color:var(--paper);border-color:var(--dim);background:none}
+.prog{width:100%;max-width:420px;height:2px;background:var(--rule);margin-top:12px;
+  overflow:hidden;opacity:0;transition:opacity .2s}
+.prog.on{opacity:1}
+.prog i{display:block;height:100%;width:0;background:var(--mesh);transition:width .18s linear}
+.progLabel{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:5px;height:13px}
+
+.result{display:flex;align-items:baseline;gap:9px;margin-bottom:2px}
+.result b{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--mesh)}
+.result span{font-size:11.5px;color:var(--dim)}
+.tag{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 6px;border-radius:2px;border:1px solid rgba(224,164,88,.4);color:var(--amber)
+}
+.tag.real{border-color:rgba(79,191,139,.4);color:var(--pos)}
+.card-s{font-family:var(--mono);font-size:10.5px;color:var(--mesh);margin-top:2px}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .changeTag.on{opacity:1}
+}
+@media (max-width:1100px){
+  #poseView{grid-template-columns:1fr;grid-template-rows:auto minmax(320px,1fr) auto}
+  .designWrap{grid-template-columns:1fr;grid-template-rows:auto minmax(340px,1fr)}
+  .dcol{border-right:none;border-bottom:1px solid var(--rule)}
+  .pocketSlot{height:300px}
+  aside{border-right:none;border-bottom:1px solid var(--rule);max-height:230px}
+  .right{border-left:none;border-top:1px solid var(--rule)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Docking <span>Bench</span></h1>
+    <span class="demo-tag" id="dataTag">demo data</span>
+    <div class="modes">
+      <button class="mode" id="mPose" aria-pressed="true">Pose</button>
+      <button class="mode" id="mDesign" aria-pressed="false">Design</button>
+    </div>
+    <div class="tabs" id="tabs" role="tablist"></div>
+  </header>
+
+  <div class="intro" id="poseIntro"><b>Known binders</b><span id="poseIntroText"></span></div>
+
+  <main id="poseView">
+    <aside id="ligPanel">
+      <div class="sec">
+        <h2 class="eyebrow">Ligand library</h2>
+        <p class="note" id="targetBlurb"></p>
+      </div>
+      <div id="ligList"></div>
+    </aside>
+
+    <div class="stage">
+      <div class="viewer-wrap">
+        <div id="viewer"></div>
+        <div class="status" id="status"><b>Loading receptor…</b><span id="statusSub"></span></div>
+        <div class="badge" id="badge" hidden></div>
+        <div class="legend" id="legend" hidden>
+          <span><i style="background:var(--mesh)"></i>docked pose</span>
+          <span><i style="background:var(--pos)"></i>crystal reference</span>
+          <span><i style="background:var(--muted)"></i>pocket residues</span>
+        </div>
+      </div>
+
+      <div class="rail">
+        <div class="rail-head">
+          <span class="eyebrow">Best score per ligand</span>
+          <span class="eyebrow">kcal · mol⁻¹</span>
+        </div>
+        <svg id="rail" height="104" role="img" aria-label="Affinity scale"></svg>
+      </div>
+    </div>
+
+    <aside class="right">
+      <div class="sec">
+        <h2 class="eyebrow">Poses</h2>
+        <table>
+          <thead><tr><th>Rank</th><th>Score</th><th>RMSD</th><th>LE</th></tr></thead>
+          <tbody id="poseRows"></tbody>
+        </table>
+        <p class="note" style="margin:10px 0 0">RMSD is measured against the crystal pose, not used for ranking.</p>
+      </div>
+
+      <div class="sec" id="detail"></div>
+
+      <div class="sec">
+        <h2 class="eyebrow">Display</h2>
+        <button class="toggle" id="tRef" aria-pressed="true"><span class="box"></span>Crystal reference pose</button>
+        <button class="toggle" id="tPocket" aria-pressed="true"><span class="box"></span>Pocket residues</button>
+        <button class="toggle" id="tBox" aria-pressed="false"><span class="box"></span>Search box</button>
+        <button class="toggle" id="tSurf" aria-pressed="false"><span class="box"></span>Pocket surface, by property</button>
+        <div class="surfKey" id="surfKeyPose" hidden></div>
+      </div>
+    </aside>
+  </main>
+
+  <main id="designView" class="designWrap" hidden>
+    <aside class="dcol">
+      <div class="pocketSlot" id="pocketSlot">
+        <button class="expand" id="btnExpand">Expand</button>
+      </div>
+      <div class="sec">
+        <span class="note" id="pocketCap"></span>
+        <div class="surfKey" id="surfKeyDesign"></div>
+      </div>
+
+      <div class="sec" style="padding-bottom:6px"><h2 class="eyebrow">Growth vectors</h2></div>
+      <div id="vecList"></div>
+      <div class="sec">
+        <h2 class="eyebrow">This vector</h2>
+        <p class="note" id="vecNote"></p>
+      </div>
+
+      <div class="sec" id="dockSec">
+        <h2 class="eyebrow">Docking result</h2>
+        <div id="dockResult"></div>
+      </div>
+
+      <div class="sec">
+        <h2 class="eyebrow">Properties</h2>
+        <dl id="propList" style="margin:0"></dl>
+        <div class="ro5" id="ro5"></div>
+        <p class="note" style="margin:10px 0 0">Computed with RDKit when the dataset was built. Deltas compare against the bare core.</p>
+      </div>
+
+      <div class="sec">
+        <h2 class="eyebrow">The scaffold</h2>
+        <p class="note" id="scaffoldStory"></p>
+      </div>
+    </aside>
+
+    <div class="designMid">
+      <div class="molStage">
+        <div id="molSvg"></div>
+        <div class="changeTag" id="changeTag"></div>
+      </div>
+      <div class="molBar">
+        <div class="molName" id="molName"></div>
+        <div class="rkey">
+          <span><i style="background:#4C85C7"></i>R1 substituent</span>
+          <span><i style="background:#9E7033"></i>R2 substituent</span>
+          <span class="smiles" id="molSmiles"></span>
+        </div>
+        <div class="dockrow">
+          <button class="btn" id="btnDock">Dock this analog</button>
+          <button class="btn ghost" id="btnDockNow" title="Skip the animation">Instant</button>
+        </div>
+        <div class="prog" id="prog"><i></i></div>
+        <div class="progLabel" id="progLabel"></div>
+      </div>
+      <div class="coach" id="coach"></div>
+      <div class="tray">
+        <span class="eyebrow">Where do you want to go?</span>
+        <div class="chips-row" id="suggChips"></div>
+        <div class="gallery" id="gallery"></div>
+        <p class="note" id="suggWhy" style="margin:9px 0 0"></p>
+      </div>
+    </div>
+  </main>
+
+  <div class="fsWrap" id="fsWrap" hidden>
+    <div class="fsSlot" id="fsSlot"></div>
+    <div class="surfKey fsKey" id="surfKeyFs"></div>
+    <div class="fsBar">
+      <span class="fsCap" id="fsCap"></span>
+      <button class="btn ghost" id="btnFsClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<script id="demoData" type="application/json">__DATA__</script>
+<script id="analogData" type="application/json">__ANALOGS__</script>
+<script>
+(function(){
+"use strict";
+
+var DATA=null, T=null, L=null, P=0, viewer=null;
+var mProtein=null, mPose=null, mRef=null, shapes=[], surf=null;
+var show={ref:true,pocket:true,box:false,surf:false};
+var cache={};
+
+var $=function(s){return document.querySelector(s)};
+var el=function(t,c,x){var n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n};
+
+/* ---------- data ---------- */
+function load(){
+  return fetch('./data.json').then(function(r){
+    if(!r.ok) throw 0; return r.json();
+  }).then(function(j){ $('#dataTag').textContent='data.json'; return j; })
+  .catch(function(){ return JSON.parse($('#demoData').textContent); });
+}
+
+/* ---------- viewer ---------- */
+function initViewer(){
+  viewer=$3Dmol.createViewer($('#viewer'),{backgroundColor:'#0A0E14',antialias:true});
+}
+
+function fetchReceptor(t){
+  if(t.pdbData) return Promise.resolve(t.pdbData);
+  if(cache[t.pdbId]) return Promise.resolve(cache[t.pdbId]);
+  return fetch('https://files.rcsb.org/download/'+t.pdbId+'.pdb')
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+    .then(function(txt){ cache[t.pdbId]=txt; return txt; });
+}
+
+function setStatus(msg,sub){
+  var s=$('#status');
+  if(msg===null){ s.hidden=true; $('#badge').hidden=false; $('#legend').hidden=false; return; }
+  s.hidden=false; $('#badge').hidden=true; $('#legend').hidden=true;
+  s.innerHTML=''; s.appendChild(el('b',null,msg));
+  if(sub) s.appendChild(el('span',null,sub));
+}
+
+function loadTarget(t){
+  T=t; L=t.ligands[0]; P=0;
+  renderTabs(); renderLigands(); renderRail(); renderPoses(); renderDetail();
+  $('#poseIntroText').textContent =
+    t.ligands.length+' inhibitors that really bind '+t.name+', docked ahead of time so nothing '+
+    'has to be computed here. Pick one, then compare its best-scoring pose against the crystal '+
+    'pose \u2014 the interesting cases are where those two disagree.';
+  setStatus('Loading '+t.pdbId+'…','fetching from RCSB');
+  viewer.clear(); mProtein=mPose=mRef=null; shapes=[]; surf=null;
+
+  return fetchReceptor(t).then(function(pdb){
+    mProtein=viewer.addModel(pdb,'pdb');
+    mProtein.setStyle({},{});
+    mProtein.setStyle({hetflag:false},{cartoon:{color:'#38536F',thickness:0.26,arrows:true}});
+    setStatus(null);
+    drawLigand(true);
+  }).catch(function(e){
+    console.error('load/draw failed',e); setStatus('Could not load '+t.pdbId,
+      'No network access to RCSB. Bundle the PDB text in data.json as "pdbData" to run fully offline.');
+  });
+}
+
+function clearShapes(){
+  shapes.forEach(function(s){ viewer.removeShape(s) }); shapes=[];
+}
+
+function drawLigand(zoom){
+  if(!mProtein) return;
+  if(mPose){viewer.removeModel(mPose);mPose=null}
+  if(mRef){viewer.removeModel(mRef);mRef=null}
+  clearShapes();
+  surfSeq++;
+  if(surf!=null){ try{viewer.removeSurface(surf)}catch(e){} surf=null }
+
+  var pose=L.poses[P];
+
+  mPose=viewer.addModel(pose.pdb,'pdb');
+  var scheme={prop:'elem',map:{C:0x7FB2E5,N:0x3F72C8,O:0xE2574C,S:0xE0A458,
+              F:0x4FBF8B,CL:0x4FBF8B,BR:0xB07D48,P:0xE0A458,I:0x9B72CF}};
+  mPose.setStyle({},{stick:{radius:0.16,colorscheme:scheme},
+                     sphere:{radius:0.30,colorscheme:scheme}});
+
+  if(show.ref && L.referencePose){
+    mRef=viewer.addModel(L.referencePose,'pdb');
+    mRef.setStyle({},{stick:{radius:0.09,color:'#4FBF8B',opacity:0.85}});
+  }
+
+  // pocket residues: taken from the top pose's contact list
+  var CART={cartoon:{color:'#38536F',thickness:0.26,arrows:true}};
+  var contacts=(L.poses[0].contacts)||[];
+  if(!show.surf && show.pocket && contacts.length){
+    mProtein.setStyle({hetflag:false},{cartoon:{color:'#38536F',thickness:0.26,arrows:true}});
+    contacts.forEach(function(c){
+      var m=/^([A-Z0-9]{1,3}?)(\d+)([A-Za-z])$/.exec(c);
+      if(!m) return;
+      mProtein.setStyle({resi:parseInt(m[2],10),chain:m[3]},
+        {cartoon:{color:'#38536F',thickness:0.26,arrows:true},
+         stick:{radius:0.09,color:'#8FA2B7',opacity:0.9}});
+    });
+  }else if(!show.surf){
+    mProtein.setStyle({hetflag:false},CART);
+  }
+
+  if(show.box && T.box){
+    var c=T.box.center,s=T.box.size;
+    shapes.push(viewer.addBox({
+      center:{x:c[0],y:c[1],z:c[2]},
+      dimensions:{w:s[0],h:s[1],d:s[2]},
+      color:'#7FB2E5',wireframe:true,opacity:0.5
+    }));
+  }
+
+  if(show.surf) addPocketSurface();
+
+  var b=$('#badge');
+  b.innerHTML='';
+  b.appendChild(el('b',null,L.name));
+  b.appendChild(document.createTextNode('  ·  pose '+pose.rank+' of '+L.poses.length+
+    '  ·  '+pose.score.toFixed(2)+' kcal/mol  ·  RMSD '+pose.rmsdToRef.toFixed(2)+' Å'));
+
+  if(zoom){ viewer.zoomTo({model:mPose});
+    viewer.zoom(FS ? 0.30 : (MODE==='design' ? 0.30 : (show.surf?0.42:0.62))); }
+  viewer.render();
+}
+
+/* ---------- panels ---------- */
+function renderTabs(){
+  var w=$('#tabs'); w.innerHTML='';
+  DATA.targets.forEach(function(t){
+    var b=el('button','tab',t.name);
+    b.setAttribute('role','tab');
+    b.setAttribute('aria-selected',t.id===T.id);
+    b.onclick=function(){ if(t.id!==T.id) loadTarget(t) };
+    w.appendChild(b);
+  });
+  $('#targetBlurb').textContent=T.blurb;
+}
+
+function isTrap(l){ return l.poses[0].rmsdToRef>2.0 }
+
+function renderLigands(){
+  var w=$('#ligList'); w.innerHTML='';
+  T.ligands.forEach(function(l){
+    var b=el('button','lig');
+    b.setAttribute('aria-current',l.id===L.id);
+    b.appendChild(el('span','lig-name',l.name));
+    b.appendChild(el('span','lig-score',l.poses[0].score.toFixed(2)));
+    var meta=el('div','lig-meta');
+    meta.appendChild(el('span',null,l.heavyAtoms+' heavy atoms'));
+    if(l.isNative) meta.appendChild(el('span','native','redocked'));
+    else if(isTrap(l)) meta.appendChild(el('span','flag','top pose off'));
+    b.appendChild(meta);
+    b.onclick=function(){ L=l; P=0; renderLigands(); renderRail(); renderPoses(); renderDetail(); drawLigand(true) };
+    w.appendChild(b);
+  });
+}
+
+function renderPoses(){
+  var w=$('#poseRows'); w.innerHTML='';
+  L.poses.forEach(function(p,i){
+    var tr=el('tr'); tr.setAttribute('aria-current',i===P);
+    var c=p.rmsdToRef<=2 ? 'var(--pos)' : (p.rmsdToRef<=4 ? 'var(--amber)' : 'var(--neg)');
+    [['#'+p.rank,''],[p.score.toFixed(2),'var(--mesh)'],[p.rmsdToRef.toFixed(2),c],
+     [p.ligandEfficiency.toFixed(3),'']].forEach(function(cell,j){
+      var td=el('td','num',cell[0]);
+      if(cell[1]) td.style.color=cell[1];
+      tr.appendChild(td);
+    });
+    tr.onclick=function(){ P=i; renderPoses(); renderRail(); drawLigand(false) };
+    w.appendChild(tr);
+  });
+}
+
+function renderDetail(){
+  var d=$('#detail'); d.innerHTML='';
+  d.appendChild(Object.assign(el('h2','eyebrow','About this ligand'),{}));
+  var dl=el('dl'); dl.style.margin='0';
+  [['Source',L.provenance],['Binding site',T.siteLabel],
+   ['Experimental Ki / IC₅₀',L.experimental||'—']].forEach(function(kv){
+    var row=el('div','kv'); row.appendChild(el('dt',null,kv[0])); row.appendChild(el('dd',null,kv[1]));
+    dl.appendChild(row);
+  });
+  d.appendChild(dl);
+
+  if(!L.experimental){
+    d.appendChild(Object.assign(el('p','note',''),{innerHTML:
+      'No measured affinity in this dataset. Add an <b>experimental</b> value in data.json to plot score against reality.'}));
+  }
+
+  var contacts=L.poses[0].contacts||[];
+  if(contacts.length){
+    d.appendChild(Object.assign(el('h2','eyebrow','Contacts, top pose'),{style:'margin:16px 0 0'}));
+    var chips=el('div','chips');
+    contacts.forEach(function(c){ chips.appendChild(el('span','chip',c)) });
+    d.appendChild(chips);
+  }
+
+  if(isTrap(L)){
+    var wrn=el('div','warn');
+    wrn.appendChild(el('b',null,'Best score, wrong pose'));
+    wrn.appendChild(document.createTextNode(
+      'The top-ranked pose sits '+L.poses[0].rmsdToRef.toFixed(1)+' Å from the crystal pose. '+
+      'A lower-ranked pose reproduces it. Ranking by score alone would have picked the wrong answer here.'));
+    d.appendChild(wrn);
+  }
+}
+
+/* ---------- affinity rail ---------- */
+function renderRail(){
+  var svg=$('#rail'), W=svg.clientWidth||760, H=104, pad=38;
+  var scores=T.ligands.map(function(l){return l.poses[0].score});
+  var all=scores.concat(L.poses.map(function(p){return p.score}));
+  var lo=Math.floor(Math.min.apply(null,all)-0.6), hi=Math.ceil(Math.max.apply(null,all)+0.6);
+  var x=function(v){ return pad+(v-lo)/(hi-lo)*(W-2*pad) };
+  var NS='http://www.w3.org/2000/svg';
+  var mk=function(t,a){ var n=document.createElementNS(NS,t); for(var k in a) n.setAttribute(k,a[k]); return n };
+
+  svg.innerHTML=''; svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  var axisY=56;
+
+  svg.appendChild(mk('line',{x1:pad,y1:axisY,x2:W-pad,y2:axisY,stroke:'#1F2B3A','stroke-width':1}));
+  for(var v=lo; v<=hi; v++){
+    svg.appendChild(mk('line',{x1:x(v),y1:axisY,x2:x(v),y2:axisY+5,stroke:'#1F2B3A'}));
+    var tx=mk('text',{x:x(v),y:axisY+17,'text-anchor':'middle','class':'tick-label'});
+    tx.textContent=v; svg.appendChild(tx);
+  }
+
+  // Ligand ticks. Labels are stacked into rows so close scores stay readable.
+  var items=T.ligands.map(function(l){
+    return {l:l,px:x(l.poses[0].score),w:l.name.length*6.2+10};
+  }).sort(function(a,b){return a.px-b.px});
+  var rowEnd=[];
+  items.forEach(function(it){
+    var r=0;
+    while(rowEnd[r]!=null && it.px-it.w/2 < rowEnd[r]) r++;
+    rowEnd[r]=it.px+it.w/2; it.row=r;
+  });
+  var maxRow=Math.max.apply(null,items.map(function(i){return i.row}));
+
+  items.forEach(function(it){
+    var on=it.l.id===L.id;
+    var top=axisY-14-(maxRow-it.row)*13;
+    var g=mk('g',{'class':'lig-tick'+(on?' on':''),tabindex:0,role:'button'});
+    g.appendChild(mk('line',{x1:it.px,y1:axisY,x2:it.px,y2:top+3,
+      stroke:on?'#7FB2E5':'#3D5166','stroke-width':on?2:1}));
+    var t=mk('text',{x:it.px,y:top-1,'text-anchor':'middle'});
+    t.textContent=it.l.name; g.appendChild(t);
+    var ttl=mk('title'); ttl.textContent=it.l.name+' · best '+it.l.poses[0].score.toFixed(2)+' kcal/mol';
+    g.appendChild(ttl);
+    var act=function(){ L=it.l; P=0; renderLigands(); renderRail(); renderPoses(); renderDetail(); drawLigand(true) };
+    g.onclick=act;
+    g.onkeydown=function(e){ if(e.key==='Enter'||e.key===' '){e.preventDefault();act()} };
+    svg.appendChild(g);
+  });
+
+  // Selected ligand's five poses, positioned by score, coloured by RMSD.
+  L.poses.forEach(function(p,i){
+    var px=x(p.score);
+    var c=p.rmsdToRef<=2?'#4FBF8B':(p.rmsdToRef<=4?'#E0A458':'#E2574C');
+    var g=mk('g',{'class':'lig-tick'+(i===P?' on':''),tabindex:0,role:'button'});
+    g.appendChild(mk('circle',{cx:px,cy:axisY+30,r:i===P?5.5:3.8,fill:c,
+      stroke:i===P?'#DCE5EE':'none','stroke-width':1.2}));
+    var ttl=mk('title');
+    ttl.textContent='Pose '+p.rank+' · '+p.score.toFixed(2)+' kcal/mol · RMSD '+p.rmsdToRef.toFixed(2)+' Angstrom';
+    g.appendChild(ttl);
+    var act=function(){ P=i; renderPoses(); renderRail(); drawLigand(false) };
+    g.onclick=act;
+    g.onkeydown=function(e){ if(e.key==='Enter'||e.key===' '){e.preventDefault();act()} };
+    svg.appendChild(g);
+  });
+
+  var lbl=mk('text',{x:pad,y:axisY+46,'class':'tick-label'});
+  lbl.textContent='poses of '+L.name+'  ·  green \u22642 \u00c5 from crystal, red >4 \u00c5';
+  svg.appendChild(lbl);
+}
+
+/* ================= residue property surface ================= */
+var RESCLASS={ALA:'phobic',VAL:'phobic',LEU:'phobic',ILE:'phobic',MET:'phobic',
+  PHE:'phobic',TRP:'phobic',PRO:'phobic',GLY:'phobic',CYS:'phobic',
+  SER:'polar',THR:'polar',ASN:'polar',GLN:'polar',TYR:'polar',
+  HIS:'pos',ARG:'pos',LYS:'pos',ASP:'neg',GLU:'neg'};
+var SURFCOL={phobic:0xB98A4E,polar:0x3E9A70,pos:0x3A63A6,neg:0xB0524A,other:0x3B4A5C};
+var SURFKEY=[['Hydrophobic','#B98A4E'],['Polar','#3E9A70'],
+             ['Basic (+)','#3A63A6'],['Acidic (\u2212)','#B0524A'],['Other','#3B4A5C']];
+var RESN_COLOR=(function(){var m={};for(var r in RESCLASS)m[r]=SURFCOL[RESCLASS[r]];return m})();
+
+function paintSurfKey(id){
+  var w=$(id); if(!w) return;
+  w.innerHTML=''; w.hidden=false;
+  SURFKEY.forEach(function(k){
+    var s=el('span'); var i=el('i'); i.style.background=k[1];
+    s.appendChild(i); s.appendChild(document.createTextNode(k[0])); w.appendChild(s);
+  });
+}
+
+var surfSeq=0;
+
+function addPocketSurface(){
+  // Surface generation is asynchronous. Show a cartoon straight away so the
+  // panel is never blank while it computes, and drop it once the surface lands
+  // -- ribbon showing through a translucent surface just reads as mud.
+  mProtein.setStyle({hetflag:false},{cartoon:{color:'#2E4257',thickness:0.22}});
+  viewer.render();
+
+  var my=++surfSeq;
+  var style={opacity:0.55,colorscheme:{prop:'resn',map:RESN_COLOR}};
+  var sel={within:{distance:MODE==='design'?8:9,sel:{model:mPose}},hetflag:false};
+
+  var land=function(id){
+    if(my!==surfSeq){ try{ viewer.removeSurface(id) }catch(e){} return }  // superseded
+    surf=id;
+    mProtein.setStyle({hetflag:false},{});
+    viewer.render();
+  };
+
+  var r;
+  try{ r=viewer.addSurface($3Dmol.SurfaceType.MS,style,sel); }
+  catch(e){
+    try{ r=viewer.addSurface($3Dmol.SurfaceType.VDW,style,sel); }
+    catch(e2){ return }   // no surface: the cartoon we just set stays visible
+  }
+  if(r && typeof r.then==='function') r.then(land,function(){});
+  else land(r);
+}
+
+/* ================= design mode ================= */
+var AN=null, R1='H', R2='H', VEC='R1', SUGG=null, MODE='pose';
+
+function akey(a,b){ return a+'|'+b }
+function withOpt(v,id){ return v==='R1'? akey(id,R2) : akey(R1,id) }
+function cur(){ return AN.analogs[akey(R1,R2)] }
+function baseline(){ return AN.analogs['H|H'] }
+function opts(v){ return AN.vectors[v] }
+function vecDef(v){ return AN.scaffold.vectors.filter(function(x){return x.id===v})[0] }
+
+/* contribution of one substituent, holding the other vector where it is */
+function contrib(v,id,prop){
+  var a=AN.analogs[withOpt(v,id)];
+  var h=AN.analogs[v==='R1'? akey('H',R2) : akey(R1,'H')];
+  return a[prop]-h[prop];
+}
+
+var SUGGESTIONS=[
+  {id:'bulkier', label:'Make it bigger here',
+   why:'Sorted by how much heavy-atom bulk each group adds.',
+   rank:function(v,o){ return -contrib(v,o.id,'heavy') }},
+  {id:'smaller', label:'Trim it down',
+   why:'Smallest groups first — useful when you suspect a clash.',
+   rank:function(v,o){ return contrib(v,o.id,'heavy') }},
+  {id:'polar', label:'Something more polar',
+   why:'Sorted by polar surface area added.',
+   rank:function(v,o){ return -contrib(v,o.id,'tpsa') }},
+  {id:'greasy', label:'Something greasier',
+   why:'Sorted by lipophilicity added.',
+   rank:function(v,o){ return -contrib(v,o.id,'logp') }},
+  {id:'donor', label:'Add an H-bond donor',
+   why:'Only groups that bring a donor with them.',
+   keep:function(v,o){ return contrib(v,o.id,'hbd')>0 },
+   rank:function(v,o){ return -contrib(v,o.id,'hbd') }},
+  {id:'ring', label:'Add a ring',
+   why:'Only groups that add a ring system.',
+   keep:function(v,o){ return contrib(v,o.id,'rings')>0 || /cyclo|piperaz|morphol/i.test(o.label) },
+   rank:function(v,o){ return -contrib(v,o.id,'heavy') }}
+];
+
+/* rule-based feedback tied to what each vector actually points at */
+function coachFor(){
+  var c=cur();
+  var g1=contrib('R1',R1,'heavy'), p1=contrib('R1',R1,'tpsa');
+  var g2=contrib('R2',R2,'heavy'), p2=contrib('R2',R2,'tpsa'), l2=contrib('R2',R2,'logp');
+
+  if(c.mw>500)
+    return {t:'bad',k:'Heavy',x:'Molecular weight is past 500. Fine for a chemical probe, '+
+      'a problem if this is meant to be an oral drug.'};
+  if(g1>=6)
+    return {t:'warn',k:'Bulky',x:'That is a wide group aimed at the back pocket. Thr766 is the '+
+      'gatekeeper here — in the real system this is where you would find out whether it fits.'};
+  if(p1>=20)
+    return {t:'warn',k:'Mismatch',x:'You have put a polar group into a hydrophobic pocket. '+
+      'Desolvating it costs energy that the pocket will not pay back.'};
+  if(g2>=6 && l2>0.8 && p2<10)
+    return {t:'warn',k:'Wasted',x:'A greasy group pointing at solvent buys logP without buying '+
+      'affinity. This vector is the place for polarity, not bulk.'};
+  if(g1>0 && g1<=4 && p1<8 && p2>15)
+    return {t:'good',k:'Sensible',x:'Small and greasy in the back pocket, polarity out toward '+
+      'solvent. That is the shape of most quinazoline SAR.'};
+  if(R1==='H' && R2==='H')
+    return {t:'warn',k:'Start here',k2:1,x:'The bare core. Pick a vector on the left, then use '+
+      'the suggestions below to grow it.'};
+  return {t:'warn',k:'This vector',x:vecDef(VEC).hint};
+}
+
+function renderVectors(){
+  var w=$('#vecList'); w.innerHTML='';
+  AN.scaffold.vectors.forEach(function(v){
+    var val=(v.id==='R1'?R1:R2);
+    var lab=opts(v.id).filter(function(o){return o.id===val})[0].label;
+    var b=el('button','vec');
+    b.setAttribute('aria-current',v.id===VEC);
+    var top=el('div','vec-top');
+    top.appendChild(el('span','vec-id',v.id));
+    top.appendChild(el('span','vec-val',lab));
+    b.appendChild(top);
+    b.appendChild(el('div','vec-where',v.label+' \u2014 points '+v.points));
+    b.onclick=function(){ VEC=v.id; renderDesign() };
+    w.appendChild(b);
+  });
+}
+
+function renderMolecule(){
+  var c=cur(), k=akey(R1,R2), changed=null;
+  if(LASTKEY && LASTKEY!==k){
+    var v=(LASTR.R1!==R1)?'R1':'R2', id=(v==='R1'?R1:R2);
+    changed=v+' \u2192 '+opts(v).filter(function(o){return o.id===id})[0].label;
+  }
+  LASTKEY=k; LASTR={R1:R1,R2:R2};
+  $('#molSvg').innerHTML=c.svg;
+  var n=$('#molName'); n.innerHTML='';
+  if(c.name){
+    n.appendChild(document.createTextNode(c.name));
+    if(c.note) n.appendChild(Object.assign(el('em',null,c.note),{}));
+  } else {
+    var l1=opts('R1').filter(function(o){return o.id===R1})[0].label;
+    var l2=opts('R2').filter(function(o){return o.id===R2})[0].label;
+    n.appendChild(document.createTextNode('R1 '+l1+'  \u00b7  R2 '+l2));
+  }
+  $('#molSmiles').textContent=c.smiles;
+
+  if(changed) flashMolecule(changed);
+
+  var cf=coachFor(), co=$('#coach');
+  co.className='coach '+cf.t; co.innerHTML='';
+  co.appendChild(el('b',null,cf.k));
+  co.appendChild(el('span',null,cf.x));
+}
+
+function renderProps(){
+  var c=cur(), b=baseline(), w=$('#propList'); w.innerHTML='';
+  var rows=[
+    ['Molecular weight','mw',500,1],
+    ['cLogP','logp',5,2],
+    ['TPSA (\u00c5\u00b2)','tpsa',140,1],
+    ['H-bond donors','hbd',5,0],
+    ['H-bond acceptors','hba',10,0],
+    ['Rotatable bonds','rotb',10,0],
+    ['Heavy atoms','heavy',null,0],
+    ['Fraction sp3','fsp3',null,2]
+  ];
+  rows.forEach(function(r){
+    var v=c[r[1]], d=v-b[r[1]], lim=r[2];
+    var row=el('div','prop');
+    row.appendChild(el('dt',null,r[0]));
+    var dd=el('dd');
+    dd.appendChild(el('span',null,v.toFixed(r[3])));
+    if(Math.abs(d)>0.004){
+      var s=el('span','delta '+(d>0?'up':'down'),(d>0?'+':'')+d.toFixed(r[3]));
+      dd.appendChild(s);
+    }
+    row.appendChild(dd);
+    w.appendChild(row);
+    if(lim){
+      var bar=el('div','bar'), fill=el('i');
+      fill.style.width=Math.min(100,Math.max(2,v/lim*100))+'%';
+      if(v>lim) fill.className='over';
+      bar.appendChild(fill); w.appendChild(bar);
+    }
+  });
+
+  var ro5=$('#ro5'); ro5.innerHTML='';
+  [['MW\u2264500',c.mw<=500],['logP\u22645',c.logp<=5],
+   ['HBD\u22645',c.hbd<=5],['HBA\u226410',c.hba<=10]].forEach(function(t){
+    ro5.appendChild(el('span',t[1]?'ok':'bad',t[0]));
+  });
+
+  var v=vecDef(VEC);
+  $('#vecNote').textContent=v.note;
+}
+
+function renderSuggestions(){
+  var w=$('#suggChips'); w.innerHTML='';
+  SUGGESTIONS.forEach(function(s){
+    var b=el('button','sugg',s.label);
+    b.setAttribute('aria-pressed',SUGG===s.id);
+    b.onclick=function(){ SUGG=(SUGG===s.id?null:s.id); renderSuggestions(); renderGallery() };
+    w.appendChild(b);
+  });
+}
+
+function renderGallery(){
+  var w=$('#gallery'); w.innerHTML='';
+  var s=SUGGESTIONS.filter(function(x){return x.id===SUGG})[0];
+  var list=opts(VEC).slice();
+  if(s){
+    if(s.keep) list=list.filter(function(o){ return s.keep(VEC,o) });
+    list.sort(function(a,b){ return s.rank(VEC,a)-s.rank(VEC,b) });
+  }
+  $('#suggWhy').textContent = s ? s.why : '';
+  if(!list.length){
+    $('#suggWhy').textContent='No group on this vector does that. Try the other vector.';
+    return;
+  }
+  var c=cur(), selNode=null;
+  list.forEach(function(o){
+    var a=AN.analogs[withOpt(VEC,o.id)];
+    var on=(VEC==='R1'? o.id===R1 : o.id===R2);
+    var b=el('button','card');
+    b.setAttribute('aria-current',on);
+    var box=el('div'); box.innerHTML=a.svg; b.appendChild(box);
+    b.appendChild(el('div','card-l',o.label));
+    var d=el('div','card-d');
+    var dm=a.mw-c.mw, dl=a.logp-c.logp;
+    d.appendChild(el('span',dm>0?'up':'down',(dm>0?'+':'')+dm.toFixed(0)+' Da'));
+    d.appendChild(el('span',dl>0?'up':'down','logP '+(dl>0?'+':'')+dl.toFixed(1)));
+    b.appendChild(d);
+    var dk=DOCKED[withOpt(VEC,o.id)];
+    if(dk) b.appendChild(el('div','card-s',dk.score.toFixed(2)+' kcal/mol'));
+    b.onclick=function(){ if(VEC==='R1') R1=o.id; else R2=o.id; renderDesign() };
+    if(on) selNode=b;
+    w.appendChild(b);
+  });
+  w.scrollLeft = selNode ? Math.max(0, selNode.offsetLeft-8) : 0;
+}
+
+function renderDesign(){
+  if(!AN) return;
+  $('#scaffoldStory').textContent=AN.scaffold.story;
+  renderVectors(); renderMolecule(); renderProps(); renderSuggestions(); renderDockResult();
+  renderGallery();
+}
+
+
+/* ================= docking (mock unless analogs.json carries real scores) =====
+   If an analog has a "score" field the app shows it and labels it vina. Otherwise
+   it synthesises a deterministic placeholder so the interaction can be rehearsed
+   before any real docking has been run. */
+var DOCKED={}, DOCKING=false, LASTKEY=null, LASTR={R1:null,R2:null};
+
+function hash01(s){
+  var x=2166136261;
+  for(var i=0;i<s.length;i++){ x^=s.charCodeAt(i); x=Math.imul(x,16777619) }
+  return ((x>>>0)%10000)/10000;
+}
+
+function mockScore(k){
+  var a=AN.analogs[k], b=AN.analogs['H|H'];
+  var only1=AN.analogs[akey(a.r1,'H')], only2=AN.analogs[akey('H',a.r2)];
+  var g1=only1.heavy-b.heavy, p1=only1.tpsa-b.tpsa, l1=only1.logp-b.logp;
+  var g2=only2.heavy-b.heavy;
+  var s=-6.9;
+  s+= -0.115*a.heavy;                 // Vina scores track size, for better or worse
+  s+= -0.30*Math.max(0,l1);           // greasy suits the back pocket
+  s+=  0.030*p1;                      // polar there costs desolvation
+  s+=  (g1>=6 ? 0.85 : 0);            // gatekeeper clash
+  s+= -0.02*g2;                       // solvent vector barely registers
+  s+=  (hash01(k)-0.5)*0.5;
+  return Math.max(-13.5,Math.min(-3.5,s));
+}
+
+function scoreFor(k){
+  var a=AN.analogs[k];
+  if(a && a.score!=null) return {v:a.score, real:true};
+  return {v:mockScore(k), real:false};
+}
+
+var STAGES=[['Preparing ligand',0.12],['Generating conformers',0.34],
+            ['Searching the pocket',0.78],['Scoring poses',1.0]];
+
+function finishDock(k){
+  var s=scoreFor(k), a=AN.analogs[k];
+  DOCKED[k]={score:s.v, le:-s.v/a.heavy, real:s.real};
+  DOCKING=false;
+  $('#btnDock').disabled=false; $('#btnDockNow').disabled=false;
+  $('#progLabel').textContent='';
+  $('#prog').classList.remove('on');
+  $('#prog').querySelector('i').style.width='0';
+  renderDockResult(); renderGallery();
+}
+
+function doDock(instant){
+  if(DOCKING) return;
+  var k=akey(R1,R2);
+  if(instant){ finishDock(k); return; }
+  DOCKING=true;
+  $('#prog').classList.add('on');
+  $('#btnDock').disabled=true; $('#btnDockNow').disabled=true;
+  var bar=$('#prog').querySelector('i'), i=0;
+  var step=function(){
+    if(i>=STAGES.length){ finishDock(k); return }
+    $('#progLabel').textContent=STAGES[i][0]+'\u2026';
+    bar.style.width=(STAGES[i][1]*100)+'%';
+    i++;
+    setTimeout(step, 380+Math.random()*320);
+  };
+  step();
+}
+
+function renderDockResult(){
+  var k=akey(R1,R2), w=$('#dockResult'), d=DOCKED[k];
+  w.innerHTML='';
+  if(!d){
+    w.appendChild(Object.assign(el('p','note',
+      'Not docked yet. Press Dock to score this analog against the pocket.'),{}));
+    return;
+  }
+  var row=el('div','result');
+  row.appendChild(el('b',null,d.score.toFixed(2)));
+  row.appendChild(el('span',null,'kcal/mol'));
+  row.appendChild(el('span',d.real?'tag real':'tag',d.real?'vina':'mock'));
+  w.appendChild(row);
+
+  var dl=el('dl'); dl.style.margin='8px 0 0';
+  var rows=[['Ligand efficiency',d.le.toFixed(3)]];
+  // where this sits among the other options on the active vector
+  var sib=opts(VEC).map(function(o){ return scoreFor(withOpt(VEC,o.id)).v }).sort(function(a,b){return a-b});
+  rows.push(['Rank on '+VEC,(sib.indexOf(scoreFor(k).v)+1)+' of '+sib.length]);
+  rows.forEach(function(r){
+    var x=el('div','kv'); x.appendChild(el('dt',null,r[0])); x.appendChild(el('dd',null,r[1]));
+    dl.appendChild(x);
+  });
+  w.appendChild(dl);
+  if(!d.real){
+    w.appendChild(Object.assign(el('p','note',''),{innerHTML:
+      'Placeholder score from a size-and-polarity heuristic, not a docking run. '+
+      'Add a <b>score</b> field per analog in analogs.json and this switches to your Vina numbers.'}));
+  }
+}
+
+/* visible confirmation that the molecule changed */
+function flashMolecule(changed){
+  var box=$('#molSvg');
+  box.classList.remove('flash'); void box.offsetWidth; box.classList.add('flash');
+  if(changed){
+    var t=$('#changeTag');
+    t.textContent=changed;
+    t.classList.remove('on'); void t.offsetWidth; t.classList.add('on');
+    clearTimeout(t._z); t._z=setTimeout(function(){ t.classList.remove('on') },1750);
+  }
+}
+
+
+/* the 3D view can take over the screen; the viewer element just moves house */
+var FS=false;
+function homeSlot(){ return MODE==='design' ? $('#pocketSlot') : $('.viewer-wrap') }
+
+function setFullscreen(on){
+  FS=on;
+  $('#fsWrap').hidden=!on;
+  if(on){
+    paintSurfKey('#surfKeyFs');
+    $('#fsCap').textContent=T.name+'  \u00b7  '+L.name;
+    $('#fsSlot').appendChild($('#viewer'));
+  } else {
+    homeSlot().appendChild($('#viewer'));
+  }
+  setTimeout(function(){
+    try{ viewer.resize() }catch(e){}
+    drawLigand(true);
+  },40);
+}
+
+/* ================= mode switching ================= */
+function setMode(m){
+  MODE=m;
+  $('#poseView').hidden=(m!=='pose');
+  $('#designView').hidden=(m!=='design');
+  $('#mPose').setAttribute('aria-pressed',m==='pose');
+  $('#mDesign').setAttribute('aria-pressed',m==='design');
+  $('#tabs').style.visibility=(m==='pose'?'visible':'hidden');
+
+  $('#poseIntro').hidden=(m!=='pose');
+  var move=function(){
+    var slot = FS ? $('#fsSlot') : ((m==='pose')? $('.viewer-wrap') : $('#pocketSlot'));
+    slot.appendChild($('#viewer'));
+    setTimeout(function(){
+      try{ viewer.resize() }catch(e){}
+      drawLigand(true);
+    },40);
+  };
+
+  if(m==='design'){
+    paintSurfKey('#surfKeyDesign'); paintSurfKey('#surfKeyPose');
+    show.surf=true; show.pocket=false; show.box=false;
+    $('#tSurf').setAttribute('aria-pressed',true);
+    $('#tPocket').setAttribute('aria-pressed',false);
+    renderDesign();
+    var after=function(){
+      $('#pocketCap').textContent=T.name+' \u2014 the native ligand is the molecule you are editing.';
+      var nat=T.ligands.filter(function(l){return l.isNative})[0];
+      if(nat){ L=nat; P=0; renderLigands(); renderRail(); renderPoses(); renderDetail(); }
+      move();
+    };
+    var t=DATA.targets.filter(function(x){return x.id===AN.scaffold.target})[0];
+    if(t && t.id!==T.id) loadTarget(t).then(after,after); else after();
+    return;
+  }
+  move();
+}
+
+/* ---------- toggles ---------- */
+function bindToggle(id,key){
+  var b=$(id);
+  b.onclick=function(){
+    show[key]=!show[key];
+    b.setAttribute('aria-pressed',show[key]);
+    if(key==='surf'){
+      if(show.surf) paintSurfKey('#surfKeyPose');
+      else $('#surfKeyPose').hidden=true;
+    }
+    drawLigand(false);
+  };
+}
+
+/* ---------- boot ---------- */
+function loadAnalogs(){
+  return fetch('./analogs.json').then(function(r){ if(!r.ok) throw 0; return r.json() })
+    .catch(function(){
+      try{ return JSON.parse($('#analogData').textContent) }catch(e){ return null }
+    });
+}
+
+Promise.all([load(),loadAnalogs()]).then(function(res){
+  var j=res[0]; AN=res[1];
+  DATA=j;
+  initViewer();
+  $('#mPose').onclick=function(){ setMode('pose') };
+  $('#mDesign').onclick=function(){ if(AN) setMode('design') };
+  if(!AN) $('#mDesign').disabled=true;
+  $('#btnExpand').onclick=function(){ setFullscreen(true) };
+  $('#btnFsClose').onclick=function(){ setFullscreen(false) };
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && FS) setFullscreen(false) });
+  $('#btnDock').onclick=function(){ doDock(false) };
+  $('#btnDockNow').onclick=function(){ doDock(true) };
+  bindToggle('#tRef','ref'); bindToggle('#tPocket','pocket');
+  bindToggle('#tBox','box'); bindToggle('#tSurf','surf');
+  window.addEventListener('resize',function(){ renderRail() });
+  loadTarget(DATA.targets[0]);
+}).catch(function(e){
+  setStatus('Could not read the dataset', String(e));
+});
+})();
+</script>
+</body>
+</html>
