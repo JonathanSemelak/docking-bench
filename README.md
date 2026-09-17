@@ -251,7 +251,35 @@ ligand, coloured by residue class:
 | Blue | Basic (Arg, Lys, His) |
 | Red | Acidic (Asp, Glu) |
 
-**This is residue-class colouring, not electrostatics.** It is computed in the
+### Pocket residues, by H-bond role
+
+The other pocket view names the residues lining the site and colours them by
+what they can do in a hydrogen bond, which is the question the surface cannot
+answer:
+
+| Colour | Role | What to hang off your vector |
+|---|---|---|
+| Red | Accepts (Asp, Glu) | an N-H or O-H |
+| Blue | Donates (Arg, Lys, Trp) | an N or O |
+| Purple | Either (Ser, Thr, Tyr, Asn, Gln, His, Cys) | either |
+| Gold | Hydrophobic | something greasy |
+
+Backbone N-H and C=O do both everywhere, which is why the hinge contact works
+and why the backbone is not coloured per residue.
+
+The shell is computed from whatever ligand is on screen, so in Design mode it
+follows the analog the student just built rather than the native ligand. Only
+the polar residues are labelled -- a 5 A shell holds twenty-odd residues and
+naming all of them buries the view, while the greasy ones read from colour
+alone. On HIV-1 protease the Asp25/Asp25' dyad shows up as two red side chains
+directly under the ligand; on EGFR the Thr766 gatekeeper and Lys721 in the back
+pocket are both named.
+
+Available in both tabs. The surface and the residue sticks are alternatives
+rather than layers, because sticks poking through a translucent surface reads
+as mud.
+
+**The surface is residue-class colouring, not electrostatics.** It is computed in the
 browser from a lookup table, so it costs nothing and is honest about what it
 shows: where the greasy walls and the charged patches are. A real electrostatic
 potential map (APBS/PB solver) would need precomputed grids and is a different

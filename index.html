@@ -422,10 +422,11 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
       <div class="sec">
         <h2 class="eyebrow">Display</h2>
         <button class="toggle" id="tRef" aria-pressed="true"><span class="box"></span>Crystal reference pose</button>
-        <button class="toggle" id="tPocket" aria-pressed="true"><span class="box"></span>Pocket residues</button>
+        <button class="toggle" id="tPocket" aria-pressed="true"><span class="box"></span>Pocket residues, by H-bond role</button>
         <button class="toggle" id="tBox" aria-pressed="false"><span class="box"></span>Search box</button>
         <button class="toggle" id="tSurf" aria-pressed="false"><span class="box"></span>Pocket surface, by property</button>
         <div class="surfKey" id="surfKeyPose" hidden></div>
+        <div class="surfKey" id="hbKeyPose" hidden></div>
       </div>
     </aside>
   </main>
@@ -437,7 +438,10 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
       </div>
       <div class="sec">
         <span class="note" id="pocketCap"></span>
+        <button class="toggle" id="dSurf" aria-pressed="true"><span class="box"></span>Pocket surface, by property</button>
+        <button class="toggle" id="dPocket" aria-pressed="false"><span class="box"></span>Pocket residues, by H-bond role</button>
         <div class="surfKey" id="surfKeyDesign"></div>
+        <div class="surfKey" id="hbKeyDesign" hidden></div>
       </div>
 
       <div class="sec" style="padding-bottom:6px"><h2 class="eyebrow">Growth vectors</h2></div>
@@ -573,11 +577,78 @@ function clearShapes(){
   shapes.forEach(function(s){ viewer.removeShape(s) }); shapes=[];
 }
 
+var labels=[];
+function clearLabels(){
+  labels.forEach(function(l){ try{ viewer.removeLabel(l) }catch(e){} }); labels=[];
+}
+
+/* Residues with any heavy atom within POCKET_R of the displayed ligand.
+
+   The distances are computed here rather than handed to 3Dmol as a `within`
+   selector: model.setStyle() quietly ignores `within` (it has no view of the
+   other model), so asking for a 5 A shell that way styles the entire protein
+   and looks like the pocket view is simply broken. viewer.addSurface does
+   honour it, which is why the surface has always been correct.
+
+   Returns {chainId: {className: [resi, ...]}}. */
+function pocketResidues(){
+  var out={};
+  if(!mPose || !mProtein) return out;
+  var lig=mPose.selectedAtoms({});
+  if(!lig.length) return out;
+  var r2=POCKET_R*POCKET_R, seen={};
+  mProtein.selectedAtoms({hetflag:false}).forEach(function(a){
+    if(a.elem==='H') return;
+    var key=a.chain+'|'+a.resi;
+    if(seen[key]) return;
+    for(var i=0;i<lig.length;i++){
+      var dx=lig[i].x-a.x, dy=lig[i].y-a.y, dz=lig[i].z-a.z;
+      if(dx*dx+dy*dy+dz*dz<=r2){
+        seen[key]=1;
+        var cls=HBOND[a.resn]||'phobic';
+        (out[a.chain]=out[a.chain]||{});
+        (out[a.chain][cls]=out[a.chain][cls]||[]).push(a.resi);
+        return;
+      }
+    }
+  });
+  return out;
+}
+
+/* Name the polar residues lining the pocket.
+
+   Only the polar ones: a 5 A shell holds twenty-odd residues and labelling
+   all of them buries the view, while the hydrophobic ones are legible from
+   colour alone. The name is the part you need in order to look something up
+   or argue about it. */
+function labelPocket(pk){
+  clearLabels();
+  if(!mProtein) return;
+  var want={};
+  Object.keys(pk).forEach(function(ch){
+    ['acc','don','both'].forEach(function(cls){        // polar residues only
+      (pk[ch][cls]||[]).forEach(function(ri){ want[ch+'|'+ri]=1 });
+    });
+  });
+  var multi=Object.keys(pk).length>1;                  // homodimer: name the chain
+  mProtein.selectedAtoms({hetflag:false}).forEach(function(a){
+    var key=a.chain+'|'+a.resi;
+    if(a.atom!=='CA' || !want[key]) return;
+    delete want[key];
+    var nm=a.resn.charAt(0)+a.resn.slice(1).toLowerCase()+a.resi+(multi?' '+a.chain:'');
+    labels.push(viewer.addLabel(nm,{
+      position:{x:a.x,y:a.y,z:a.z}, fontSize:10, fontColor:'#DCE5EE',
+      backgroundColor:'#0A0E14', backgroundOpacity:0.62,
+      borderThickness:0, inFront:true, alignment:'center'}));
+  });
+}
+
 function drawLigand(zoom){
   if(!mProtein) return;
   if(mPose){viewer.removeModel(mPose);mPose=null}
   if(mRef){viewer.removeModel(mRef);mRef=null}
   clearShapes();
+  clearLabels();
   surfSeq++;
   if(surf!=null){ try{viewer.removeSurface(surf)}catch(e){} surf=null }
 
@@ -597,18 +668,24 @@ function drawLigand(zoom){
     mRef.setStyle({},{stick:{radius:0.09,color:'#4FBF8B',opacity:0.85}});
   }
 
-  // pocket residues: taken from the top pose's contact list
+  // Pocket residues, coloured by what they can do in a hydrogen bond.
+  //
+  // These are selected geometrically from whatever is currently displayed,
+  // not read from the stored contact list: in design mode the ligand on
+  // screen is an analog the student just built, so a contact list computed
+  // for the native ligand would describe a different molecule.
   var CART={cartoon:{color:'#38536F',thickness:0.26,arrows:true}};
-  var contacts=(L.poses[0].contacts)||[];
-  if(!show.surf && show.pocket && contacts.length){
-    mProtein.setStyle({hetflag:false},{cartoon:{color:'#38536F',thickness:0.26,arrows:true}});
-    contacts.forEach(function(c){
-      var m=/^([A-Z0-9]{1,3}?)(\d+)([A-Za-z])$/.exec(c);
-      if(!m) return;
-      mProtein.setStyle({resi:parseInt(m[2],10),chain:m[3]},
-        {cartoon:{color:'#38536F',thickness:0.26,arrows:true},
-         stick:{radius:0.09,color:'#8FA2B7',opacity:0.9}});
+  if(!show.surf && show.pocket){
+    mProtein.setStyle({hetflag:false},CART);
+    var pk=pocketResidues();
+    Object.keys(pk).forEach(function(ch){
+      Object.keys(pk[ch]).forEach(function(cls){
+        mProtein.setStyle({chain:ch,resi:pk[ch][cls],hetflag:false},
+          {cartoon:{color:'#38536F',thickness:0.26,arrows:true},
+           stick:{radius:0.13,color:HBCOL[cls],opacity:0.95}});
+      });
     });
+    labelPocket(pk);
   }else if(!show.surf){
     mProtein.setStyle({hetflag:false},CART);
   }
@@ -875,6 +952,43 @@ var SURFKEY=[['Hydrophobic','#B98A4E'],['Polar','#3E9A70'],
              ['Basic (+)','#3A63A6'],['Acidic (\u2212)','#B0524A'],['Other','#3B4A5C']];
 var RESN_COLOR=(function(){var m={};for(var r in RESCLASS)m[r]=SURFCOL[RESCLASS[r]];return m})();
 
+/* Hydrogen-bonding role of each side chain.
+
+   The five-class surface above answers "where are the greasy walls"; it does
+   not answer "could this accept an H-bond from what I am drawing", because
+   polar and charged both collapse the direction the contact has to point.
+   Asp and Glu can only accept, Arg and Lys can only donate, and the
+   hydroxyls and amides do either -- which is the distinction a student needs
+   to decide what to hang off a vector.
+
+   Side chains only. Backbone N-H and C=O are donor and acceptor everywhere,
+   which is exactly why the hinge contact works, so they are noted in the
+   legend rather than coloured per residue. */
+var HBOND={ASP:'acc',GLU:'acc',
+  ARG:'don',LYS:'don',TRP:'don',
+  SER:'both',THR:'both',TYR:'both',ASN:'both',GLN:'both',HIS:'both',CYS:'both',
+  ALA:'phobic',VAL:'phobic',LEU:'phobic',ILE:'phobic',MET:'phobic',
+  PHE:'phobic',PRO:'phobic',GLY:'phobic'};
+var HBCOL={acc:0xE2574C,don:0x5B8DD6,both:0xB77BD0,phobic:0xE0A458};
+var HBKEY=[['Accepts \u2014 aim an N\u2013H or O\u2013H at it','#E2574C'],
+           ['Donates \u2014 aim an N or O at it','#5B8DD6'],
+           ['Either','#B77BD0'],
+           ['Hydrophobic','#E0A458']];
+var HB_RESN=(function(){var m={};for(var r in HBOND)m[r]=HBCOL[HBOND[r]];return m})();
+var POCKET_R=5.0;
+
+function paintHbKey(id){
+  var w=$(id); if(!w) return;
+  w.innerHTML=''; w.hidden=false;
+  HBKEY.forEach(function(k){
+    var sp=el('span'); var i=el('i'); i.style.background=k[1];
+    sp.appendChild(i); sp.appendChild(document.createTextNode(k[0])); w.appendChild(sp);
+  });
+  var n=el('span'); n.style.cssText='color:var(--dim);font-size:10.5px';
+  n.textContent='backbone N\u2013H and C=O do both, everywhere';
+  w.appendChild(n);
+}
+
 function paintSurfKey(id){
   var w=$(id); if(!w) return;
   w.innerHTML=''; w.hidden=false;
@@ -891,6 +1005,7 @@ function addPocketSurface(){
   // panel is never blank while it computes, and drop it once the surface lands
   // -- ribbon showing through a translucent surface just reads as mud.
   mProtein.setStyle({hetflag:false},{cartoon:{color:'#2E4257',thickness:0.22}});
+  clearLabels();
   viewer.render();
 
   var my=++surfSeq;
@@ -1285,10 +1400,11 @@ function setMode(m){
   };
 
   if(m==='design'){
-    paintSurfKey('#surfKeyDesign'); paintSurfKey('#surfKeyPose');
-    show.surf=true; show.pocket=false; show.box=false;
-    $('#tSurf').setAttribute('aria-pressed',true);
-    $('#tPocket').setAttribute('aria-pressed',false);
+    show.box=false;
+    // Opening on the surface: shape first, then the student can switch to
+    // named residues to ask what a contact would have to point at.
+    if(!show.surf && !show.pocket) show.surf=true;
+    syncKeys();
     renderDesign();
     var after=function(){
       $('#pocketCap').textContent=T.name+' \u2014 the native ligand is the molecule you are editing.';
@@ -1304,15 +1420,31 @@ function setMode(m){
 }
 
 /* ---------- toggles ---------- */
+function syncKeys(){
+  // The two legends describe different questions, and only one of them is
+  // ever on screen, so they are driven from the same place rather than from
+  // each toggle handler.
+  [['#surfKeyPose','#hbKeyPose'],['#surfKeyDesign','#hbKeyDesign']].forEach(function(pair){
+    var sk=$(pair[0]), hk=$(pair[1]);
+    if(sk){ if(show.surf) paintSurfKey(pair[0]); else sk.hidden=true; }
+    if(hk){ if(!show.surf && show.pocket) paintHbKey(pair[1]); else hk.hidden=true; }
+  });
+  [['#tSurf',show.surf],['#dSurf',show.surf],
+   ['#tPocket',show.pocket],['#dPocket',show.pocket]].forEach(function(t){
+    var b=$(t[0]); if(b) b.setAttribute('aria-pressed',t[1]);
+  });
+}
+
 function bindToggle(id,key){
   var b=$(id);
+  if(!b) return;
   b.onclick=function(){
     show[key]=!show[key];
-    b.setAttribute('aria-pressed',show[key]);
-    if(key==='surf'){
-      if(show.surf) paintSurfKey('#surfKeyPose');
-      else $('#surfKeyPose').hidden=true;
-    }
+    // A translucent surface with sticks poking through reads as mud, so the
+    // two pocket views are alternatives rather than layers.
+    if(key==='surf' && show.surf) show.pocket=false;
+    if(key==='pocket' && show.pocket) show.surf=false;
+    syncKeys();
     drawLigand(false);
   };
 }
@@ -1339,6 +1471,8 @@ Promise.all([load(),loadAnalogs()]).then(function(res){
   $('#btnDockNow').onclick=function(){ doDock(true) };
   bindToggle('#tRef','ref'); bindToggle('#tPocket','pocket');
   bindToggle('#tBox','box'); bindToggle('#tSurf','surf');
+  bindToggle('#dPocket','pocket'); bindToggle('#dSurf','surf');
+  syncKeys();
   window.addEventListener('resize',function(){ renderRail() });
   if(DATA.setups && DATA.setups.length){
     // 'standard' is the condition most people would run without thinking
