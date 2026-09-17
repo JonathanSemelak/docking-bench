@@ -175,13 +175,13 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
 }
 .mode[aria-pressed=true]{color:var(--paper);background:var(--panel-2);border-color:var(--mesh)}
 
-.designWrap{display:grid;grid-template-columns:410px minmax(0,1fr);flex:1;min-height:0}
+.designWrap{display:grid;grid-template-columns:minmax(620px,53%) minmax(0,1fr);flex:1;min-height:0}
 .designWrap>*{min-width:0;overflow-y:auto}
 .dcol{border-right:1px solid var(--rule);background:var(--panel)}
 .designMid{display:flex;flex-direction:column;overflow-y:auto}
 
 /* pocket map in the design column */
-.pocketSlot{position:relative;height:clamp(330px,46vh,580px);border-bottom:1px solid var(--rule);background:var(--void)}
+.pocketSlot{position:relative;height:clamp(500px,70vh,900px);border-bottom:1px solid var(--rule);background:var(--void)}
 .surfKey{display:flex;flex-wrap:wrap;gap:3px 12px;margin-top:9px}
 .surfKey span{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .surfKey i{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
@@ -206,7 +206,7 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
   justify-content:center;padding:12px 24px 0;position:relative;overflow:hidden;
 }
 #molSvg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
-#molSvg svg{width:100%;height:100%;max-width:1150px;display:block}
+#molSvg svg{width:100%;height:100%;max-width:430px;max-height:265px;margin:0 auto;display:block}
 .molBar{
   flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 24px 12px
 }
@@ -350,8 +350,9 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
 @media (max-width:1100px){
   #poseView{grid-template-columns:1fr;grid-template-rows:auto minmax(320px,1fr) auto}
   .designWrap{grid-template-columns:1fr;grid-template-rows:auto minmax(340px,1fr)}
+  #molSvg svg{max-width:100%;max-height:215px}
   .dcol{border-right:none;border-bottom:1px solid var(--rule)}
-  .pocketSlot{height:300px}
+  .pocketSlot{height:380px}
   aside{border-right:none;border-bottom:1px solid var(--rule);max-height:230px}
   .right{border-left:none;border-top:1px solid var(--rule)}
 }
@@ -509,7 +510,7 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
 (function(){
 "use strict";
 
-var DATA=null, T=null, L=null, P=0, viewer=null, SETUP=null;
+var DATA=null, T=null, L=null, P=0, viewer=null, SETUP=null, APOSE=null;
 var mProtein=null, mPose=null, mRef=null, shapes=[], surf=null;
 var show={ref:true,pocket:true,box:false,surf:false};
 var cache={};
@@ -580,7 +581,10 @@ function drawLigand(zoom){
   surfSeq++;
   if(surf!=null){ try{viewer.removeSurface(surf)}catch(e){} surf=null }
 
-  var pose=L.poses[P];
+  // In design mode, once an analog has been docked we show that pose rather
+  // than the native ligand -- otherwise pressing Dock changes a number while
+  // the 3D panel carries on displaying erlotinib.
+  var pose=(MODE==='design' && APOSE) ? {pdb:APOSE.pdb} : L.poses[P];
 
   mPose=viewer.addModel(pose.pdb,'pdb');
   var scheme={prop:'elem',map:{C:0x7FB2E5,N:0x3F72C8,O:0xE2574C,S:0xE0A458,
@@ -622,12 +626,26 @@ function drawLigand(zoom){
 
   var b=$('#badge');
   b.innerHTML='';
-  b.appendChild(el('b',null,L.name));
-  b.appendChild(document.createTextNode('  ·  pose '+pose.rank+' of '+L.poses.length+
-    '  ·  '+pose.score.toFixed(2)+' kcal/mol  ·  RMSD '+pose.rmsdToRef.toFixed(2)+' Å'));
+  if(MODE==='design' && APOSE){
+    b.appendChild(el('b',null,APOSE.name||'Your analog'));
+    b.appendChild(document.createTextNode(
+      '  \u00b7  top pose  \u00b7  '+APOSE.score.toFixed(2)+' kcal/mol'+
+      (L.referencePose?'  \u00b7  green = erlotinib crystal pose':'')));
+  }else{
+    b.appendChild(el('b',null,L.name));
+    var bits='  \u00b7  pose '+pose.rank+' of '+L.poses.length+
+             '  \u00b7  '+pose.score.toFixed(2)+' kcal/mol';
+    if(pose.rmsdToRef!=null) bits+='  \u00b7  RMSD '+pose.rmsdToRef.toFixed(2)+' \u00c5';
+    b.appendChild(document.createTextNode(bits));
+  }
 
-  if(zoom){ viewer.zoomTo({model:mPose});
-    viewer.zoom(FS ? 0.30 : (MODE==='design' ? 0.30 : (show.surf?0.42:0.62))); }
+  if(zoom){
+    viewer.zoomTo({model:mPose});
+    // <1 zooms out from the ligand to give pocket context. Design mode is
+    // about the molecule being built, so it sits much closer than the
+    // pose-comparison view, which needs to show where the pose sits overall.
+    viewer.zoom(FS ? 0.55 : (MODE==='design' ? 0.85 : (show.surf?0.42:0.62)));
+  }
   viewer.render();
 }
 
@@ -1087,7 +1105,13 @@ function renderGallery(){
     b.appendChild(d);
     var dk=DOCKED[withOpt(VEC,o.id)];
     if(dk) b.appendChild(el('div','card-s',dk.score.toFixed(2)+' kcal/mol'));
-    b.onclick=function(){ if(VEC==='R1') R1=o.id; else R2=o.id; renderDesign() };
+    b.onclick=function(){
+      if(VEC==='R1') R1=o.id; else R2=o.id;
+      // the pose belongs to the previous analog
+      APOSE=null;
+      renderDesign();
+      if(MODE==='design' && mProtein) drawLigand(false);
+    };
     if(on) selNode=b;
     w.appendChild(b);
   });
@@ -1147,6 +1171,16 @@ function finishDock(k){
   $('#prog').classList.remove('on');
   $('#prog').querySelector('i').style.width='0';
   renderDockResult(); renderGallery();
+
+  // Show the docked pose in 3D. Analogs carry a precomputed top pose; a
+  // placeholder score has none, so the panel keeps the native ligand rather
+  // than inventing geometry to match a number that was never a docking run.
+  if(a.pose){
+    APOSE={pdb:a.pose, score:s.v, name:a.name||('R1 '+R1+' / R2 '+R2)};
+  }else{
+    APOSE=null;
+  }
+  if(mProtein) drawLigand(true);
 }
 
 function doDock(instant){

@@ -17,6 +17,7 @@ import argparse, json, time
 from pathlib import Path
 import dockbench as db
 from run_prep import ligand_pdbqt
+from build_data import pdbqt_to_pdb
 
 ROOT = Path(__file__).parent
 WORK = ROOT / "work"
@@ -40,7 +41,10 @@ def main():
     T = prep["targets"][tid]
     rec = WORK / T["receptorPdbqt"]
 
-    keys = [k for k in A["analogs"] if a.redo or "score" not in A["analogs"][k]]
+    # resume on the pose as well as the score: an interrupted run can leave an
+    # analog scored but without the geometry the viewer needs
+    keys = [k for k in A["analogs"]
+            if a.redo or "score" not in A["analogs"][k] or "pose" not in A["analogs"][k]]
     if a.limit:
         keys = keys[:a.limit]
     print(f"{len(keys)} analogs to dock into {tid} ({T['pdbId']}), "
@@ -58,6 +62,11 @@ def main():
                           cpu=a.cpu, seed=42)
             an["score"] = round(res[0][0], 2)
             an["scoreSource"] = "vina"
+            # Keep the top pose so the viewer can show what was actually
+            # docked. Without it "Dock this analog" can only change a number,
+            # and the 3D panel keeps showing the native ligand no matter what
+            # the student builds.
+            an["pose"] = pdbqt_to_pdb(res[0][1], "LIG")
             print(f"  [{i}/{len(keys)}] {k:14s} {an.get('name') or '':22s} "
                   f"{an['score']:7.2f}", flush=True)
         except Exception as e:
