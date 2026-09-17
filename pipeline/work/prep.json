@@ -26,6 +26,27 @@
     47.5,
     70.7,
     64.5
+   ],
+   "receptorPdbqtWet": "receptor/hivpr_wet.pdbqt",
+   "waters": [
+    {
+     "chain": "A",
+     "resid": 332,
+     "ligandDist": 3.33,
+     "protContacts": 3
+    },
+    {
+     "chain": "B",
+     "resid": 308,
+     "ligandDist": 2.68,
+     "protContacts": 2
+    },
+    {
+     "chain": "B",
+     "resid": 313,
+     "ligandDist": 2.84,
+     "protContacts": 4
+    }
    ]
   },
   "egfr": {

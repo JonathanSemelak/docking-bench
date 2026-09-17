@@ -113,20 +113,39 @@ def ligand_pdbqt(smiles, out_path, seed=0xD0CC):
     from rdkit import Chem
     from rdkit.Chem import AllChem
     from meeko import MoleculePreparation, PDBQTWriterLegacy
-    m = Chem.AddHs(Chem.MolFromSmiles(smiles))
-    ps = AllChem.ETKDGv3(); ps.randomSeed = seed
-    if AllChem.EmbedMolecule(m, ps) != 0:
-        ps.useRandomCoords = True
-        if AllChem.EmbedMolecule(m, ps) != 0:
-            raise RuntimeError("embedding failed")
-    AllChem.MMFFOptimizeMolecule(m, maxIters=2000)
-    prep = MoleculePreparation()
-    setup = prep(m)[0]
-    txt, ok, err = PDBQTWriterLegacy.write_string(setup)
-    if not ok:
-        raise RuntimeError(f"meeko: {err}")
-    Path(out_path).write_text(txt)
-    return out_path
+
+    base = Chem.MolFromSmiles(smiles)
+    if base is None:
+        raise RuntimeError(f"unparseable SMILES: {smiles[:60]}")
+    n = base.GetNumAtoms()
+
+    # Meeko can fail on a molecule purely because of the order its atoms are
+    # numbered in -- a terminal alkyne written first (erlotinib's canonical
+    # SMILES starts "C#C...") raises "list.remove(x): x not in list", while
+    # the identical molecule written another way prepares fine. Renumbering
+    # is chemically a no-op, so retry with the atoms in a different order
+    # rather than dropping the ligand.
+    orders = [None, list(range(n))[::-1], list(range(1, n)) + [0]]
+    last = None
+    for order in orders:
+        try:
+            mol = base if order is None else Chem.RenumberAtoms(base, order)
+            m = Chem.AddHs(mol)
+            ps = AllChem.ETKDGv3(); ps.randomSeed = seed
+            if AllChem.EmbedMolecule(m, ps) != 0:
+                ps.useRandomCoords = True
+                if AllChem.EmbedMolecule(m, ps) != 0:
+                    raise RuntimeError("embedding failed")
+            AllChem.MMFFOptimizeMolecule(m, maxIters=2000)
+            setup = MoleculePreparation()(m)[0]
+            txt, ok, err = PDBQTWriterLegacy.write_string(setup)
+            if not ok:
+                raise RuntimeError(f"meeko writer: {err}")
+            Path(out_path).write_text(txt)
+            return out_path
+        except Exception as e:
+            last = e
+    raise RuntimeError(f"ligand prep failed after {len(orders)} atom orderings: {last}")
 
 
 def main():

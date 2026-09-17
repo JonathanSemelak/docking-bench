@@ -61,6 +61,58 @@ Switching the scoring function to Vinardo pulls erlotinib to 3.08 A and
 atazanavir from 11.56 A to 1.30 A, without changing the search at all. That is
 the lesson in one click: the failure is in the scoring, not the searching.
 
+### The setup selector
+
+Eight conditions ship with the dataset, and switching between them is the
+exercise. Median top-1 RMSD over the ligands that have a crystal reference:
+
+| Setup | median RMSD | crystal pose outside the box |
+|---|---|---|
+| Tight box, 18 A | 5.75 | 6 |
+| Standard, 24 A, exh 8 | 7.01 | 2 |
+| Standard box, exh 32 | 7.90 | 2 |
+| Loose box, 34 A | 7.87 | 0 |
+| Mis-centred by 6 A | 8.69 | 10 |
+| Vinardo scoring | 4.98 | 2 |
+| Blind, whole protein | 8.94 | 0 |
+| **Standard + flap water** (HIV only) | **3.70** | 0 |
+
+Two of those rows are worth dwelling on. **Searching harder does not help** --
+exhaustiveness 32 is no better than 8, because the search was never the problem.
+And **mis-centring the box by 6 A gets nothing right at all**, largely because
+for ten ligands it puts the answer outside the box entirely; the app says so
+rather than letting that read as a scoring failure.
+
+### What one water molecule does
+
+The biggest single improvement in the whole dataset comes from *preparation*,
+not from any docking parameter. Restoring the conserved waters that bridge the
+Ile50 flaps to the ligand halves the median error on HIV-1 protease:
+
+| Ligand | Dry | + water |
+|---|---|---|
+| Saquinavir | 10.21 | **2.43** |
+| Ritonavir | 11.76 | **3.34** |
+| Darunavir | 4.78 | 3.74 |
+| Amprenavir | 4.50 | 3.67 |
+| DMP323 | 6.14 | 4.36 |
+| Indinavir | 0.60 | 0.61 |
+| **Tipranavir** | **2.31** | **10.77** |
+
+Tipranavir is the one that gets *worse*, and it is the one that should: it is a
+non-peptidic inhibitor that contacts the flap NH groups directly and displaces
+that water rather than binding through it. Putting the water back blocks it.
+The cyclic urea DMP323 displaces the same water and does not follow the
+pattern, so treat this as one clean case rather than a tidy two-class result --
+which is itself a fair thing to show students about real data.
+
+The waters are not hand-picked. `pipeline/prep_wet.py` keeps any water within
+3.6 A of the native ligand that also makes at least two polar contacts to
+protein, which is the usual working definition of a bridging water. In 1HSG
+that selects three, including HOH 308 at 2.68 A. In 1M17 it selects none, so
+EGFR has no wet variant and the setup is skipped for that target rather than
+silently docked against a different receptor.
+
 The lapatinib case is real too. Lapatinib binds an inactive,
 αC-helix-out conformation of EGFR (1XKK); 1M17 is closer to active. Cross-docking
 into the wrong receptor conformation is one of the standard ways docking fails,
@@ -144,6 +196,12 @@ field, that number is shown with a green **vina** tag. If it does not, the app
 synthesises a deterministic placeholder from size and polarity and labels it
 **mock** in amber, with a line under it saying so. Nothing silently pretends to
 be a docking result.
+
+**All 96 analogs now carry real scores**, docked into 1M17 by
+`pipeline/dock_analogs.py`, so the amber tag should not appear. The control is
+built in: `CCH|MEO` is erlotinib exactly, and it scores -7.25 against the -7.21
+that the same molecule gets in the main dataset -- 0.04 kcal/mol apart, by two
+independent paths through the pipeline.
 
 Scores stay cached for the session and appear on the gallery cards, so students
 can dock several analogs and compare them side by side.

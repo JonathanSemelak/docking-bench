@@ -115,9 +115,19 @@ def main():
         L = prep["ligands"][lk]
         T = prep["targets"][L["target"]]
         centre, size = box_for(s, T)
+        # A setup may ask for a receptor variant (e.g. one that keeps the
+        # conserved waters). Targets without that variant are skipped rather
+        # than silently docked against the wrong receptor.
+        rec_key = "receptorPdbqt" + s.get("receptor", "").capitalize()
+        if rec_key not in T:
+            print(f"  [{i}/{len(jobs)}] {lk:12s} {s['id']:9s} "
+                  f"skipped: no '{s.get('receptor')}' receptor for this target",
+                  flush=True)
+            continue
+        receptor = WORK / T[rec_key]
         t0 = time.time()
         try:
-            res = db.dock(WORK / T["receptorPdbqt"],
+            res = db.dock(receptor,
                           WORK / f"ligand/{L['target']}_{L['id']}.pdbqt",
                           centre, size, exhaustiveness=s["exhaustiveness"],
                           n_poses=N_POSES, sf=s["scoring"], cpu=a.cpu, seed=a.seed)
@@ -142,6 +152,7 @@ def main():
                 ref_in_box = bool(db.box_contains(xyz, centre, size)[0])
             done[key] = {"ligand": lk, "setup": s["id"], "center": list(map(float, centre)),
                          "size": list(map(float, size)), "refInBox": ref_in_box,
+                         "receptor": s.get("receptor") or "apo",
                          "seconds": round(time.time() - t0, 1), "poses": poses}
             r0 = poses[0].get("rmsdToRef")
             print(f"  [{i}/{len(jobs)}] {lk:12s} {s['id']:9s} "

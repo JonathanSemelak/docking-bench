@@ -1,19 +1,83 @@
 {
  "_comment": "Docking conditions. 'box' is edge length in angstrom; 'center' is site | offset | blind. Edit freely -- build_data.py reads whatever ran.",
  "setups": [
-  {"id":"tight",    "label":"Tight box, 18 A",        "box":18, "exhaustiveness":8,  "scoring":"vina",    "center":"site",
-   "note":"Small box. Fast, but it can exclude the crystal pose entirely."},
-  {"id":"standard", "label":"Standard, 24 A, exh 8",  "box":24, "exhaustiveness":8,  "scoring":"vina",    "center":"site",
-   "note":"The default most people run without thinking about it."},
-  {"id":"deep",     "label":"Standard box, exh 32",   "box":24, "exhaustiveness":32, "scoring":"vina",    "center":"site",
-   "note":"Same box, four times the search. Tests whether searching harder helps."},
-  {"id":"loose",    "label":"Loose box, 34 A",        "box":34, "exhaustiveness":32, "scoring":"vina",    "center":"site",
-   "note":"Big box. Contains every crystal pose, but scores get noisier."},
-  {"id":"offset",   "label":"Mis-centred by 6 A",     "box":24, "exhaustiveness":8,  "scoring":"vina",    "center":"offset", "offset":[6,0,0],
-   "note":"What happens when you pick the pocket centre badly."},
-  {"id":"vinardo",  "label":"Vinardo scoring",        "box":24, "exhaustiveness":8,  "scoring":"vinardo", "center":"site",
-   "note":"Same search, different scoring function."},
-  {"id":"blind",    "label":"Blind, whole protein",   "box":null,"exhaustiveness":32,"scoring":"vina",    "center":"blind",
-   "note":"No prior knowledge of the site. The expensive one."}
+  {
+   "id": "tight",
+   "label": "Tight box, 18 A",
+   "box": 18,
+   "exhaustiveness": 8,
+   "scoring": "vina",
+   "center": "site",
+   "note": "Small box. Fast, but it can exclude the crystal pose entirely."
+  },
+  {
+   "id": "standard",
+   "label": "Standard, 24 A, exh 8",
+   "box": 24,
+   "exhaustiveness": 8,
+   "scoring": "vina",
+   "center": "site",
+   "note": "The default most people run without thinking about it."
+  },
+  {
+   "id": "deep",
+   "label": "Standard box, exh 32",
+   "box": 24,
+   "exhaustiveness": 32,
+   "scoring": "vina",
+   "center": "site",
+   "note": "Same box, four times the search. Tests whether searching harder helps."
+  },
+  {
+   "id": "loose",
+   "label": "Loose box, 34 A",
+   "box": 34,
+   "exhaustiveness": 32,
+   "scoring": "vina",
+   "center": "site",
+   "note": "Big box. Contains every crystal pose, but scores get noisier."
+  },
+  {
+   "id": "offset",
+   "label": "Mis-centred by 6 A",
+   "box": 24,
+   "exhaustiveness": 8,
+   "scoring": "vina",
+   "center": "offset",
+   "offset": [
+    6,
+    0,
+    0
+   ],
+   "note": "What happens when you pick the pocket centre badly."
+  },
+  {
+   "id": "vinardo",
+   "label": "Vinardo scoring",
+   "box": 24,
+   "exhaustiveness": 8,
+   "scoring": "vinardo",
+   "center": "site",
+   "note": "Same search, different scoring function."
+  },
+  {
+   "id": "blind",
+   "label": "Blind, whole protein",
+   "box": null,
+   "exhaustiveness": 32,
+   "scoring": "vina",
+   "center": "blind",
+   "note": "No prior knowledge of the site. The expensive one."
+  },
+  {
+   "id": "water",
+   "label": "Standard + flap water",
+   "box": 24,
+   "exhaustiveness": 8,
+   "scoring": "vina",
+   "center": "site",
+   "receptor": "wet",
+   "note": "Keeps the conserved waters that bridge ligand to protein. HIV-1 protease only."
+  }
  ]
 }
