@@ -116,8 +116,10 @@ def main():
     man = json.load(open(ROOT / "manifest.json"))
     setups = {s["id"]: s for s in json.load(open(ROOT / "setups.json"))["setups"]}
     R = load_results()
-    have = sorted({v["setup"] for v in R.values() if "setup" in v})
-    use = have if a.multi else [a.setup]
+    have = {v["setup"] for v in R.values() if "setup" in v}
+    # keep the order declared in setups.json: it runs from the most focused
+    # search to the least, which is the order the comparison reads in
+    use = [s for s in setups if s in have] if a.multi else [a.setup]
     missing = [s for s in use if s not in have]
     if missing:
         raise SystemExit(f"no results for setup(s) {missing}; have {have}")

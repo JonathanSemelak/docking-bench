@@ -13,32 +13,55 @@ and nothing to compute at runtime.
 | `docking-bench-standalone.html` | Everything in one file. Double-click to open. No server needed. |
 | `index.html` + `data.json` | The same app, split. Use this for hosting and for swapping in your own data. |
 | `analogs.json` | 96 precomputed analogs of the quinazoline core. |
+| `pipeline/` | Everything needed to regenerate `data.json` from real Vina runs. See its own README. |
 
-The scripts that generated `data.json` and `analogs.json` are **not in this repo**.
-Where the sections below describe that pipeline, read it as a description of how
-the shipped data was made, not as a file you can run. The JSON is already built,
-and the [data schema](#data-schema) is everything you need to produce your own.
+`data.json` is produced by `pipeline/`, which is in this repo and runs offline
+once prepared. `analogs.json` was built by an RDKit enumeration script that is
+not included; the section on it below describes the method rather than a file
+you can run.
 
 ## Try it first
 
 Open `docking-bench-standalone.html` in a browser. Two targets are included:
 
-- **HIV-1 protease** (1HSG) with five inhibitors
-- **EGFR kinase** (1M17) with four inhibitors
+- **HIV-1 protease** (1HSG) with ten inhibitors — all nine FDA-approved
+  protease inhibitors plus the cyclic urea DMP323
+- **EGFR kinase** (1M17) with ten inhibitors — erlotinib, gefitinib, lapatinib,
+  osimertinib, afatinib, neratinib, dacomitinib, AEE788, TAK-285 and a
+  pyrrolotriazine
 
-Both receptors are real crystal structures, and every ligand is a real crystal
-pose superposed into the receptor frame. **The poses and scores are synthetic** —
-plausible rigid perturbations with Vina-like affinities, not actual Vina output.
-Replace them with your own before teaching anything quantitative.
+**Every score and pose is real AutoDock Vina 1.2.5 output**, produced by the
+pipeline in `pipeline/`. Crystal reference poses come from the best-resolution
+structure of each ligand (darunavir from 2HS1 at 0.84 A) superposed into the
+reference receptor frame. RMSD is symmetry-corrected.
+
+Only indinavir and erlotinib are native to their reference receptor. The other
+eighteen are cross-docks into a receptor crystallised around something else,
+which is the realistic case and the harder one.
+
+**One caveat to state in class:** all waters were removed during receptor
+preparation. In 1HSG that deletes HOH 308, which bridges both Ile50 flap NH
+groups 2.68 A from indinavir and is contacted by every peptidomimetic protease
+inhibitor in the set. It is a standard thing to do and a real handicap, and the
+cyclic urea DMP323 is the one ligand designed to be indifferent to it.
 
 ## The teaching hook
 
-Two ligands (KNI-272 and lapatinib) are set up so the *best-scoring pose is the
-wrong pose* — it sits ~6.5 Å from the crystal pose, while a lower-ranked pose
-reproduces it. That's the part students remember: docking gave a confident
-number and a wrong answer, and only the reference pose reveals it.
+Nothing here is staged. **Erlotinib docked into 1M17 — its own crystal
+structure — scores -7.22 for a pose 7.90 A from the answer, while the pose that
+reproduces the crystal at 1.43 A ranks fifth and scores worse.** That holds
+across exhaustiveness 8, 32 and 64 and three random seeds, so it is not a
+sampling accident: Vina finds the right pose every time and ranks four wrong
+ones above it.
 
-The lapatinib case is real, not just staged. Lapatinib binds an inactive,
+What makes that trustworthy rather than alarming is the control. Indinavir,
+run through the identical pipeline, redocks to 0.60 A at rank 1.
+
+Switching the scoring function to Vinardo pulls erlotinib to 3.08 A and
+atazanavir from 11.56 A to 1.30 A, without changing the search at all. That is
+the lesson in one click: the failure is in the scoring, not the searching.
+
+The lapatinib case is real too. Lapatinib binds an inactive,
 αC-helix-out conformation of EGFR (1XKK); 1M17 is closer to active. Cross-docking
 into the wrong receptor conformation is one of the standard ways docking fails,
 and the back-pocket contacts (Lys721, Glu738) make it visible.
@@ -182,8 +205,16 @@ better than any caption.
 
 ## Data schema
 
+Each ligand can carry several docking **setups** — different box sizes,
+centres, search depths or scoring functions. When `data.json` has a top-level
+`setups` list, each ligand's poses live under `runs` and the app shows a setup
+selector; with a single setup it uses `poses` directly and the selector is
+hidden, so both shapes work.
+
 ```jsonc
 {
+  "setups": [{ "id":"standard", "label":"Standard, 24 A, exh 8",
+               "box":24, "exhaustiveness":8, "scoring":"vina", "center":"site" }],
   "targets": [{
     "id": "hivpr",
     "name": "HIV-1 protease",
@@ -193,6 +224,11 @@ better than any caption.
     "pdbId": "1HSG",                              // fallback: fetch from RCSB
     "box": { "center": [13.07, 22.47, 5.56], "size": [24, 24, 24] },
     "ligands": [{
+      // with several setups, poses move under runs:
+      //   "runs": [{ "setupId":"standard", "refInBox":true, "poses":[...] }]
+      // refInBox records whether the crystal pose was even inside the search
+      // box, so a large RMSD is never mistaken for a scoring failure when the
+      // box simply ruled the right answer out.
       "id": "MK1",
       "name": "Indinavir",
       "provenance": "native ligand of this structure",

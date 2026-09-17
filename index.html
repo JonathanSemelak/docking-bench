@@ -54,6 +54,18 @@ header h1 span{color:var(--mesh)}
   border:1px solid var(--rule);border-radius:2px;background:var(--panel-2);
 }
 .tab[aria-selected=true]{color:var(--void);background:var(--mesh);border-color:var(--mesh)}
+.setup-row{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 2px}
+.setup{
+  font-family:var(--cond);font-weight:600;font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;padding:5px 9px;color:var(--muted);cursor:pointer;
+  border:1px solid var(--rule);border-radius:2px;background:transparent;
+}
+.setup[aria-pressed=true]{color:var(--void);background:var(--amber);border-color:var(--amber)}
+.setup-note{font-size:11.5px;color:var(--muted);line-height:1.45;margin:7px 0 0}
+.oob{
+  display:block;margin:7px 0 0;padding:6px 8px;font-size:11.5px;line-height:1.45;
+  color:var(--amber);border-left:2px solid var(--amber);background:rgba(224,164,88,.07);
+}
 
 main{display:grid;grid-template-columns:268px minmax(0,1fr) 300px;flex:1;min-height:0}
 aside{border-right:1px solid var(--rule);overflow-y:auto;background:var(--panel)}
@@ -361,6 +373,11 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
 
   <main id="poseView">
     <aside id="ligPanel">
+      <div class="sec" id="setupPanel" hidden>
+        <h2 class="eyebrow">Docking setup</h2>
+        <div class="setup-row" id="setupRow"></div>
+        <p class="setup-note" id="setupNote"></p>
+      </div>
       <div class="sec">
         <h2 class="eyebrow">Ligand library</h2>
         <p class="note" id="targetBlurb"></p>
@@ -492,7 +509,7 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
 (function(){
 "use strict";
 
-var DATA=null, T=null, L=null, P=0, viewer=null;
+var DATA=null, T=null, L=null, P=0, viewer=null, SETUP=null;
 var mProtein=null, mPose=null, mRef=null, shapes=[], surf=null;
 var show={ref:true,pocket:true,box:false,surf:false};
 var cache={};
@@ -531,7 +548,7 @@ function setStatus(msg,sub){
 
 function loadTarget(t){
   T=t; L=t.ligands[0]; P=0;
-  renderTabs(); renderLigands(); renderRail(); renderPoses(); renderDetail();
+  renderSetups(); renderTabs(); renderLigands(); renderRail(); renderPoses(); renderDetail();
   $('#poseIntroText').textContent =
     t.ligands.length+' inhibitors that really bind '+t.name+', docked ahead of time so nothing '+
     'has to be computed here. Pick one, then compare its best-scoring pose against the crystal '+
@@ -615,6 +632,57 @@ function drawLigand(zoom){
 }
 
 /* ---------- panels ---------- */
+/* ---------- docking setups ----------
+   Each ligand may carry several runs, one per docking condition. Rather than
+   teach the fifteen places that read L.poses about runs, the selected run is
+   materialised onto L.poses and everything downstream stays as it was. */
+function hasSetups(){ return !!(DATA && DATA.setups && DATA.setups.length) }
+
+function setupById(id){
+  var out=null;
+  (DATA.setups||[]).forEach(function(s){ if(s.id===id) out=s });
+  return out;
+}
+
+function applySetup(id){
+  if(!hasSetups()) return;
+  SETUP=id;
+  DATA.targets.forEach(function(t){
+    t.ligands.forEach(function(l){
+      if(!l.runs) return;
+      var run=null;
+      l.runs.forEach(function(r){ if(r.setupId===id) run=r });
+      // A ligand may not have been run under every condition; fall back to
+      // whatever it does have so the library never shows a blank row.
+      if(!run) run=l.runs[0];
+      if(!run) return;
+      l.poses=run.poses; l.refInBox=run.refInBox; l.activeBox=run.box;
+    });
+    if(t.ligands.length && t.ligands[0].activeBox) t.box=t.ligands[0].activeBox;
+  });
+}
+
+function renderSetups(){
+  if(!hasSetups()){ $('#setupPanel').hidden=true; return; }
+  $('#setupPanel').hidden=false;
+  var row=$('#setupRow'); row.innerHTML='';
+  DATA.setups.forEach(function(s){
+    var b=el('button','setup',s.label||s.id);
+    b.type='button';
+    b.setAttribute('aria-pressed', s.id===SETUP?'true':'false');
+    b.onclick=function(){
+      if(s.id===SETUP) return;
+      applySetup(s.id);
+      P=0;
+      renderSetups(); renderLigands(); renderPoses(); renderDetail(); renderRail();
+      drawLigand(false);
+    };
+    row.appendChild(b);
+  });
+  var s=setupById(SETUP);
+  $('#setupNote').textContent=s&&s.note?s.note:'';
+}
+
 function renderTabs(){
   var w=$('#tabs'); w.innerHTML='';
   DATA.targets.forEach(function(t){
@@ -627,7 +695,11 @@ function renderTabs(){
   $('#targetBlurb').textContent=T.blurb;
 }
 
-function isTrap(l){ return l.poses[0].rmsdToRef>2.0 }
+function isTrap(l){
+  var r=l.poses[0].rmsdToRef;
+  // no reference pose (dacomitinib) means no verdict, not a failure
+  return r!=null && r>2.0 && l.refInBox!==false;
+}
 
 function renderLigands(){
   var w=$('#ligList'); w.innerHTML='';
@@ -684,6 +756,16 @@ function renderDetail(){
     var chips=el('div','chips');
     contacts.forEach(function(c){ chips.appendChild(el('span','chip',c)) });
     d.appendChild(chips);
+  }
+
+  if(L.refInBox===false){
+    var oob=el('div','oob');
+    oob.appendChild(el('b',null,'The crystal pose is outside this box. '));
+    oob.appendChild(document.createTextNode(
+      'Under this setup the search could not reach the right answer, so a large '+
+      'RMSD here says nothing about the scoring function \u2014 it is the box that '+
+      'ruled the pose out.'));
+    d.appendChild(oob);
   }
 
   if(isTrap(L)){
@@ -1224,6 +1306,13 @@ Promise.all([load(),loadAnalogs()]).then(function(res){
   bindToggle('#tRef','ref'); bindToggle('#tPocket','pocket');
   bindToggle('#tBox','box'); bindToggle('#tSurf','surf');
   window.addEventListener('resize',function(){ renderRail() });
+  if(DATA.setups && DATA.setups.length){
+    // 'standard' is the condition most people would run without thinking
+    // about it, which makes it the right thing to open on.
+    var def=DATA.setups[0].id;
+    DATA.setups.forEach(function(x){ if(x.id==='standard') def='standard' });
+    applySetup(def);
+  }
   loadTarget(DATA.targets[0]);
 }).catch(function(e){
   setStatus('Could not read the dataset', String(e));
