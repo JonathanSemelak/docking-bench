@@ -1,0 +1,263 @@
+{
+ "note": "Ligand manifest for Docking Bench. Every (ligand,pdbId) pair verified against RCSB.",
+ "targets": [
+  {
+   "id": "hivpr",
+   "name": "HIV-1 protease",
+   "pdbId": "1HSG",
+   "siteLabel": "Asp25 / Asp25' dyad",
+   "blurb": "Homodimeric aspartic protease. Every approved inhibitor is a transition-state mimic binding across both monomers.",
+   "refLigand": "MK1"
+  },
+  {
+   "id": "egfr",
+   "name": "EGFR kinase domain",
+   "pdbId": "1M17",
+   "siteLabel": "ATP site, Met793 hinge",
+   "blurb": "Receptor tyrosine kinase. 1M17 is an active-like conformation, which matters for anything that prefers alphaC-out.",
+   "refLigand": "AQ4"
+  }
+ ],
+ "ligands": [
+  {
+   "target": "hivpr",
+   "id": "MK1",
+   "name": "Indinavir",
+   "sourcePdb": "2AVS",
+   "smiles": "CC(C)(C)NC(=O)[C@@H]1C[N@@](CC[N@]1C[C@H](C[C@@H](Cc2ccccc2)C(=O)N[C@H]3c4ccccc4C[C@H]3O)O)Cc5cccnc5",
+   "heavyAtoms": 45,
+   "mw": 613.8,
+   "drugbank": "DB00224",
+   "covalent": false,
+   "provenance": "native ligand of 1HSG"
+  },
+  {
+   "target": "hivpr",
+   "id": "ROC",
+   "name": "Saquinavir",
+   "sourcePdb": "2NMZ",
+   "smiles": "CC(C)(C)NC(=O)[C@@H]1C[C@@H]2CCCC[C@@H]2C[N@]1C[C@H]([C@H](Cc3ccccc3)NC(=O)[C@H](CC(=O)N)NC(=O)c4ccc5ccccc5n4)O",
+   "heavyAtoms": 49,
+   "mw": 670.8,
+   "drugbank": "DB01232",
+   "covalent": false,
+   "provenance": "first approved HIV PI (1995)"
+  },
+  {
+   "target": "hivpr",
+   "id": "017",
+   "name": "Darunavir",
+   "sourcePdb": "2HS1",
+   "smiles": "CC(C)C[N@@](C[C@H]([C@H](Cc1ccccc1)NC(=O)O[C@H]2CO[C@@H]3[C@H]2CCO3)O)S(=O)(=O)c4ccc(cc4)N",
+   "heavyAtoms": 38,
+   "mw": 547.7,
+   "drugbank": "DB01264",
+   "covalent": false,
+   "provenance": "0.84 A structure; high genetic barrier"
+  },
+  {
+   "target": "hivpr",
+   "id": "RIT",
+   "name": "Ritonavir",
+   "sourcePdb": "3NDX",
+   "smiles": "CC(C)c1nc(cs1)CN(C)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H](Cc2ccccc2)C[C@@H]([C@H](Cc3ccccc3)NC(=O)OCc4cncs4)O",
+   "heavyAtoms": 50,
+   "mw": 720.9,
+   "drugbank": "DB00503",
+   "covalent": false,
+   "provenance": "now used mainly as a booster"
+  },
+  {
+   "target": "hivpr",
+   "id": "478",
+   "name": "Amprenavir",
+   "sourcePdb": "3NU4",
+   "smiles": "CC(C)C[N@](C[C@H]([C@H](Cc1ccccc1)NC(=O)O[C@H]2CCOC2)O)S(=O)(=O)c3ccc(cc3)N",
+   "heavyAtoms": 35,
+   "mw": 505.6,
+   "drugbank": "DB00701",
+   "covalent": false,
+   "provenance": "sulfonamide series"
+  },
+  {
+   "target": "hivpr",
+   "id": "AB1",
+   "name": "Lopinavir",
+   "sourcePdb": "6DJ1",
+   "smiles": "Cc1cccc(c1OCC(=O)N[C@@H](Cc2ccccc2)[C@H](C[C@H](Cc3ccccc3)NC(=O)[C@H](C(C)C)N4CCCNC4=O)O)C",
+   "heavyAtoms": 46,
+   "mw": 628.8,
+   "drugbank": "DB01601",
+   "covalent": false,
+   "provenance": "co-formulated with ritonavir"
+  },
+  {
+   "target": "hivpr",
+   "id": "TPV",
+   "name": "Tipranavir",
+   "sourcePdb": "6DIF",
+   "smiles": "CCC[C@]1(CC(=C(C(=O)O1)[C@H](CC)c2cccc(c2)NS(=O)(=O)c3ccc(cn3)C(F)(F)F)O)CCc4ccccc4",
+   "heavyAtoms": 42,
+   "mw": 602.7,
+   "drugbank": "DB00932",
+   "covalent": false,
+   "provenance": "non-peptidic dihydropyrone"
+  },
+  {
+   "target": "hivpr",
+   "id": "1UN",
+   "name": "Nelfinavir",
+   "sourcePdb": "3EL5",
+   "smiles": "Cc1c(cccc1O)C(=O)N[C@@H](CSc2ccccc2)[C@@H](C[N@@]3C[C@H]4CCCC[C@H]4C[C@H]3C(=O)NC(C)(C)C)O",
+   "heavyAtoms": 40,
+   "mw": 567.8,
+   "drugbank": "DB00220",
+   "covalent": false,
+   "provenance": ""
+  },
+  {
+   "target": "hivpr",
+   "id": "DR7",
+   "name": "Atazanavir",
+   "sourcePdb": "3EKW",
+   "smiles": "CC(C)(C)[C@@H](C(=O)N[C@@H](Cc1ccccc1)[C@H](CN(Cc2ccc(cc2)c3ccccn3)NC(=O)[C@H](C(C)(C)C)NC(=O)OC)O)NC(=O)OC",
+   "heavyAtoms": 51,
+   "mw": 704.9,
+   "drugbank": "DB01072",
+   "covalent": false,
+   "provenance": "once-daily azapeptide"
+  },
+  {
+   "target": "hivpr",
+   "id": "DMP",
+   "name": "DMP323",
+   "sourcePdb": "3JVW",
+   "smiles": "c1ccc(cc1)C[C@@H]2[C@@H]([C@H]([C@H](N(C(=O)N2Cc3ccc(cc3)CO)Cc4ccc(cc4)CO)Cc5ccccc5)O)O",
+   "heavyAtoms": 42,
+   "mw": 566.7,
+   "drugbank": null,
+   "covalent": false,
+   "provenance": "cyclic urea; displaces the structural water"
+  },
+  {
+   "target": "egfr",
+   "id": "AQ4",
+   "name": "Erlotinib",
+   "sourcePdb": "1M17",
+   "smiles": "COCCOc1cc2c(cc1OCCOC)ncnc2Nc3cccc(c3)C#C",
+   "heavyAtoms": 29,
+   "mw": 393.4,
+   "drugbank": "DB00530",
+   "covalent": false,
+   "provenance": "native ligand of 1M17"
+  },
+  {
+   "target": "egfr",
+   "id": "IRE",
+   "name": "Gefitinib",
+   "sourcePdb": "4I22",
+   "smiles": "COc1cc2c(cc1OCCCN3CCOCC3)c(ncn2)Nc4ccc(c(c4)Cl)F",
+   "heavyAtoms": 31,
+   "mw": 446.9,
+   "drugbank": "DB00317",
+   "covalent": false,
+   "provenance": ""
+  },
+  {
+   "target": "egfr",
+   "id": "FMM",
+   "name": "Lapatinib",
+   "sourcePdb": "1XKK",
+   "smiles": "CS(=O)(=O)CCNCc1ccc(o1)c2ccc3c(c2)c(ncn3)Nc4ccc(c(c4)Cl)OCc5cccc(c5)F",
+   "heavyAtoms": 40,
+   "mw": 581.1,
+   "drugbank": "DB01259",
+   "covalent": false,
+   "provenance": "binds the alphaC-out inactive conformation"
+  },
+  {
+   "target": "egfr",
+   "id": "YY3",
+   "name": "Osimertinib",
+   "sourcePdb": "6LUD",
+   "smiles": "Cn1cc(c2c1cccc2)c3ccnc(n3)Nc4cc(c(cc4OC)N(C)CCN(C)C)NC(=O)C=C",
+   "heavyAtoms": 37,
+   "mw": 499.6,
+   "drugbank": "DB09330",
+   "covalent": true,
+   "provenance": "covalent, Cys797"
+  },
+  {
+   "target": "egfr",
+   "id": "AEE",
+   "name": "AEE788",
+   "sourcePdb": "2ITT",
+   "smiles": "CCN1CCN(CC1)Cc2ccc(cc2)c3cc4c([nH]3)ncnc4N[C@H](C)c5ccccc5",
+   "heavyAtoms": 33,
+   "mw": 440.6,
+   "drugbank": "DB12558",
+   "covalent": false,
+   "provenance": "dual EGFR/VEGFR"
+  },
+  {
+   "target": "egfr",
+   "id": "HKI",
+   "name": "Neratinib",
+   "sourcePdb": "3W2Q",
+   "smiles": "CCOc1cc2c(cc1NC(=O)CCCN(C)C)c(c(cn2)C#N)Nc3ccc(c(c3)Cl)OCc4ccccn4",
+   "heavyAtoms": 40,
+   "mw": 559.1,
+   "drugbank": "DB11828",
+   "covalent": true,
+   "provenance": "covalent, Cys797"
+  },
+  {
+   "target": "egfr",
+   "id": "1C9",
+   "name": "Dacomitinib",
+   "sourcePdb": "4I24",
+   "smiles": "COc1cc2c(cc1NC(=O)/C=C/CN3CCCCC3)c(ncn2)Nc4ccc(c(c4)Cl)F",
+   "heavyAtoms": 33,
+   "mw": 469.9,
+   "drugbank": "DB11963",
+   "covalent": true,
+   "provenance": "covalent, Cys797"
+  },
+  {
+   "target": "egfr",
+   "id": "0WN",
+   "name": "Afatinib",
+   "sourcePdb": "4G5J",
+   "smiles": "CN(C)CCCC(=O)Nc1cc2c(cc1O[C@H]3CCOC3)ncnc2Nc4ccc(c(c4)Cl)F",
+   "heavyAtoms": 34,
+   "mw": 488.0,
+   "drugbank": "DB08916",
+   "covalent": true,
+   "provenance": "covalent, Cys797"
+  },
+  {
+   "target": "egfr",
+   "id": "03P",
+   "name": "TAK-285",
+   "sourcePdb": "3POZ",
+   "smiles": "CC(C)(CC(=O)NCCn1ccc2c1c(ncn2)Nc3ccc(c(c3)Cl)Oc4cccc(c4)C(F)(F)F)O",
+   "heavyAtoms": 38,
+   "mw": 548.0,
+   "drugbank": null,
+   "covalent": false,
+   "provenance": "dual EGFR/HER2"
+  },
+  {
+   "target": "egfr",
+   "id": "W2R",
+   "name": "Pyrrolotriazine W2R",
+   "sourcePdb": "3W2S",
+   "smiles": "c1cc(cc(c1)Oc2ccc(cc2Cl)Nc3c4c(ccn4CCOCCO)ncn3)NC(=O)NC5CCCCC5",
+   "heavyAtoms": 40,
+   "mw": 565.1,
+   "drugbank": null,
+   "covalent": false,
+   "provenance": ""
+  }
+ ]
+}
