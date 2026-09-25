@@ -1,5 +1,7 @@
 # Clave docente — Guía de actividades
 
+**Universidad Siglo 21** · Team teaching **«Diseñá tu propio fármaco»**
+
 Complemento de [`GUIA-ACTIVIDADES.md`](GUIA-ACTIVIDADES.md). **No repartir a los
 estudiantes.** Todos los valores salen de `data.json` y `analogs.json`, y son
 salida directa de AutoDock Vina 1.2.5.

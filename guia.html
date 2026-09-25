@@ -1,0 +1,999 @@
+<title>Diseñá tu propio fármaco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#F3F6FA; --panel:#FFFFFF; --panel-2:#E9F0F7; --rule:#D5DFEA;
+  --ink:#131C26; --muted:#57697B; --dim:#8497A9;
+  --mesh:#2B6CAB; --mesh-soft:#E3EDF7; --mesh-edge:#B9D3EA;
+  --pos:#1B7F53; --pos-soft:#E1F2EA;
+  --neg:#BE3A2E; --neg-soft:#FBE7E4;
+  --amber:#8A5A12; --amber-soft:#FAF0DC;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --cond:'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif;
+  --body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --void:#0A0E14; --panel:#10161F; --panel-2:#161F2B; --rule:#22303F;
+    --ink:#DCE5EE; --muted:#93A5B8; --dim:#66798D;
+    --mesh:#7FB2E5; --mesh-soft:#14202E; --mesh-edge:#2A3E54;
+    --pos:#4FBF8B; --pos-soft:#0F1E19;
+    --neg:#E2574C; --neg-soft:#221413;
+    --amber:#E0A458; --amber-soft:#1F1810;
+  }
+}
+:root[data-theme="dark"]{
+  --void:#0A0E14; --panel:#10161F; --panel-2:#161F2B; --rule:#22303F;
+  --ink:#DCE5EE; --muted:#93A5B8; --dim:#66798D;
+  --mesh:#7FB2E5; --mesh-soft:#14202E; --mesh-edge:#2A3E54;
+  --pos:#4FBF8B; --pos-soft:#0F1E19;
+  --neg:#E2574C; --neg-soft:#221413;
+  --amber:#E0A458; --amber-soft:#1F1810;
+}
+
+body{
+  background:var(--void); color:var(--ink);
+  font-family:var(--body); font-size:16px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:760px; margin:0 auto; padding-inline:20px; padding-block:0 72px}
+*{box-sizing:border-box}
+
+/* ---------- sticky bar ---------- */
+.bar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:20;
+  background:var(--void);
+  background:color-mix(in srgb,var(--void) 92%,transparent);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--rule);
+  margin-inline:-20px; padding:9px 20px;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+.bar .who{
+  font-family:var(--cond); font-weight:700; font-size:12px;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--mesh);
+}
+.bar nav{display:flex; gap:3px; flex-wrap:wrap; margin-left:auto}
+.bar nav a{
+  font-family:var(--mono); font-size:11.5px; font-weight:500;
+  color:var(--muted); text-decoration:none;
+  padding:3px 6px; border-radius:3px; border:1px solid transparent;
+}
+.bar nav a:hover{color:var(--mesh); background:var(--mesh-soft); border-color:var(--mesh-edge)}
+
+/* ---------- masthead ---------- */
+header.mast{padding-block:44px 8px}
+.kicker{
+  font-family:var(--cond); font-weight:600; font-size:11.5px;
+  letter-spacing:.17em; text-transform:uppercase; color:var(--dim);
+  margin:0 0 14px;
+}
+.tt{
+  font-family:var(--cond); font-weight:700; font-size:clamp(15px,3.4vw,19px);
+  color:var(--mesh); margin:0 0 12px; letter-spacing:-.005em;
+}
+h1{
+  font-family:var(--cond); font-weight:700; font-size:clamp(32px,7vw,46px);
+  line-height:1.04; letter-spacing:-.015em; margin:0 0 16px; text-wrap:balance;
+}
+.standfirst{font-size:17.5px; color:var(--muted); margin:0 0 26px; max-width:62ch}
+.standfirst strong{color:var(--ink); font-weight:600}
+
+.facts{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule);
+  border-radius:4px; overflow:hidden; margin-bottom:26px;
+}
+.facts div{background:var(--panel); padding:11px 14px}
+.facts dt{
+  font-family:var(--cond); font-weight:600; font-size:10.5px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin:0 0 3px;
+}
+.facts dd{margin:0; font-size:14.5px; font-weight:500}
+.facts a{color:var(--mesh); font-family:var(--mono); font-size:12.5px; word-break:break-all}
+
+/* ---------- ui-label convention ---------- */
+.ui{
+  font-family:var(--mono); font-size:.87em; font-weight:500;
+  color:var(--mesh); background:var(--mesh-soft);
+  border:1px solid var(--mesh-edge); border-radius:3px;
+  padding:1px 5px; white-space:nowrap;
+}
+.ui.amb{color:var(--amber); background:var(--amber-soft); border-color:color-mix(in srgb,var(--amber) 35%,transparent)}
+.num{font-family:var(--mono); font-variant-numeric:tabular-nums; font-weight:500}
+
+/* ---------- prose ---------- */
+h2.part{
+  font-family:var(--cond); font-weight:700; font-size:clamp(22px,4.5vw,28px);
+  letter-spacing:-.01em; margin:0 0 6px; text-wrap:balance;
+}
+.partwrap{
+  margin:56px 0 30px; padding:20px 0 0; border-top:3px solid var(--mesh);
+}
+.partwrap .budget{
+  font-family:var(--mono); font-size:12.5px; color:var(--muted); margin:0 0 14px;
+}
+h3{
+  font-family:var(--cond); font-weight:700; font-size:20.5px; line-height:1.22;
+  margin:0 0 4px; text-wrap:balance;
+}
+h4{
+  font-family:var(--cond); font-weight:600; font-size:11px; letter-spacing:.15em;
+  text-transform:uppercase; color:var(--dim); margin:22px 0 8px;
+}
+p{margin:0 0 15px}
+.wrap section p, .wrap section li{max-width:64ch}
+ol,ul{margin:0 0 15px; padding-left:22px}
+li{margin-bottom:6px}
+ol.steps{counter-reset:s; list-style:none; padding-left:0}
+ol.steps li{
+  counter-increment:s; position:relative; padding-left:30px; margin-bottom:8px;
+}
+ol.steps li::before{
+  content:counter(s); position:absolute; left:0; top:1px;
+  font-family:var(--mono); font-size:11.5px; font-weight:600; color:var(--mesh);
+  background:var(--mesh-soft); border:1px solid var(--mesh-edge); border-radius:3px;
+  width:20px; height:20px; display:grid; place-items:center;
+}
+strong{font-weight:600}
+em{color:var(--muted)}
+
+/* ---------- activity block ---------- */
+.act{position:relative; margin:0 0 42px; scroll-margin-top:72px}
+.act .head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+.code{
+  font-family:var(--mono); font-weight:600; font-size:12px; color:var(--mesh);
+  border:1px solid var(--mesh-edge); background:var(--mesh-soft);
+  border-radius:3px; padding:2px 7px; flex:none;
+}
+.mins{
+  font-family:var(--mono); font-size:12px; color:var(--dim);
+  border-bottom:1px dotted var(--rule); flex:none;
+}
+@media (min-width:1040px){
+  .act .code{position:absolute; left:-88px; top:3px; text-align:center; width:62px}
+  .act .head{gap:10px}
+}
+
+/* ---------- questions ---------- */
+.q{
+  border-left:2px solid var(--rule); padding-left:16px; margin:16px 0 20px;
+  list-style:none; padding-block:2px;
+}
+.q li{position:relative; margin-bottom:11px; max-width:64ch}
+.q li .lab{
+  font-family:var(--mono); font-size:12.5px; font-weight:600; color:var(--mesh);
+  margin-right:7px;
+}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:4px; background:var(--panel)}
+table{border-collapse:collapse; width:100%; font-size:14px; min-width:100%}
+caption{
+  caption-side:top; text-align:left; font-family:var(--cond); font-weight:600;
+  font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim);
+  padding:10px 14px 0;
+}
+th,td{padding:8px 12px; text-align:left; border-bottom:1px solid var(--rule); vertical-align:top}
+thead th{
+  font-family:var(--cond); font-weight:600; font-size:11px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--dim); background:var(--panel-2);
+  white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.n,th.n{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums}
+td.lbl{font-weight:500}
+.tw table td:first-child{white-space:nowrap}
+.tw.free table td:first-child{white-space:normal}
+
+/* ---------- fill-in ---------- */
+input.fill{
+  font-family:var(--mono); font-size:13.5px; font-variant-numeric:tabular-nums;
+  color:var(--ink); background:transparent;
+  border:none; border-bottom:1px dashed var(--mesh-edge);
+  width:100%; min-width:62px; padding:2px 3px; border-radius:2px;
+}
+input.fill:hover{border-bottom-color:var(--mesh); background:var(--mesh-soft)}
+input.fill:focus{outline:2px solid var(--mesh); outline-offset:1px; background:var(--mesh-soft)}
+td:has(input.fill){padding:5px 10px}
+
+.saved{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  font-size:12.5px; color:var(--muted); margin:-8px 0 26px;
+}
+.saved .dot{width:7px; height:7px; border-radius:50%; background:var(--pos); flex:none}
+button.clear{
+  font-family:var(--cond); font-weight:600; font-size:11px; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--muted);
+  background:var(--panel); border:1px solid var(--rule); border-radius:3px;
+  padding:4px 9px; cursor:pointer;
+}
+button.clear:hover{color:var(--neg); border-color:var(--neg)}
+button.clear:focus-visible{outline:2px solid var(--mesh); outline-offset:2px}
+
+/* ---------- exportar a la planilla ---------- */
+.export{
+  border:1px solid var(--mesh-edge); background:var(--mesh-soft);
+  border-radius:4px; padding:15px 16px; margin:0 0 22px;
+}
+.export .tag{
+  font-family:var(--cond); font-weight:600; font-size:10.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--mesh); display:block; margin-bottom:9px;
+}
+.export p{margin:0 0 10px; font-size:14px; max-width:none}
+.export .who{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:11px}
+.export .who label{font-size:13.5px; font-weight:500; flex:none}
+.export .who input{
+  flex:1 1 200px; min-width:0;
+  font-family:var(--body); font-size:14px; color:var(--ink);
+  background:var(--panel); border:1px solid var(--mesh-edge); border-radius:3px;
+  padding:5px 9px;
+}
+.export .who input:focus{outline:2px solid var(--mesh); outline-offset:1px}
+textarea.tsv{
+  width:100%; min-height:82px; resize:vertical;
+  font-family:var(--mono); font-size:12.5px; line-height:1.5; color:var(--ink);
+  background:var(--panel); border:1px solid var(--mesh-edge); border-radius:3px;
+  padding:8px 10px; white-space:pre; overflow-x:auto;
+}
+textarea.tsv:focus{outline:2px solid var(--mesh); outline-offset:1px}
+.export .actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px}
+button.go{
+  font-family:var(--cond); font-weight:600; font-size:12px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--panel); background:var(--mesh);
+  border:1px solid var(--mesh); border-radius:3px; padding:6px 13px; cursor:pointer;
+}
+button.go:hover{filter:brightness(1.12)}
+button.go:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+.export .sheet{
+  font-family:var(--cond); font-weight:600; font-size:12px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--mesh); text-decoration:none;
+  border:1px solid var(--mesh-edge); border-radius:3px; padding:6px 13px; background:var(--panel);
+}
+.export .sheet:hover{background:var(--mesh-soft)}
+.export .status{font-size:12.5px; color:var(--muted)}
+
+/* ---------- callouts ---------- */
+.note{
+  background:var(--panel); border:1px solid var(--rule); border-left:3px solid var(--mesh);
+  border-radius:0 4px 4px 0; padding:13px 16px; margin:0 0 22px; font-size:14.5px;
+}
+.note p{margin:0 0 9px; max-width:none}
+.note p:last-child{margin:0}
+.note .tag{
+  font-family:var(--cond); font-weight:600; font-size:10.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--mesh); display:block; margin-bottom:5px;
+}
+.note.warn{border-left-color:var(--amber)}
+.note.warn .tag{color:var(--amber)}
+
+/* ---------- rmsd legend ---------- */
+.legend{
+  display:flex; gap:0; flex-wrap:wrap; border:1px solid var(--rule);
+  border-radius:4px; overflow:hidden; margin:0 0 22px; background:var(--panel);
+}
+.legend div{flex:1 1 150px; padding:10px 14px; border-right:1px solid var(--rule)}
+.legend div:last-child{border-right:none}
+.legend b{
+  display:block; font-family:var(--mono); font-size:13px; font-weight:600; margin-bottom:2px;
+}
+.legend span{font-size:12.5px; color:var(--muted)}
+.legend .g b{color:var(--pos)} .legend .a b{color:var(--amber)} .legend .r b{color:var(--neg)}
+
+/* ---------- pose/design swatches ---------- */
+.swatch{display:inline-block; width:22px; height:3px; vertical-align:middle; margin-right:6px; border-radius:2px}
+
+/* ---------- closing ---------- */
+.close{
+  margin-top:52px; padding:26px 0 0; border-top:3px solid var(--mesh);
+}
+ol.conc{counter-reset:c; list-style:none; padding-left:0}
+ol.conc li{
+  counter-increment:c; background:var(--panel); border:1px solid var(--rule);
+  border-radius:4px; padding:14px 16px 16px; margin-bottom:12px; max-width:none;
+}
+ol.conc li::before{
+  content:counter(c); font-family:var(--mono); font-size:11px; font-weight:600;
+  color:var(--dim); display:block; margin-bottom:4px;
+}
+textarea.conc{
+  width:100%; margin-top:8px; min-height:56px; resize:vertical;
+  font-family:var(--body); font-size:14px; line-height:1.5; color:var(--ink);
+  background:var(--void); border:1px solid var(--rule); border-radius:3px; padding:8px 10px;
+}
+textarea.conc:focus{outline:2px solid var(--mesh); outline-offset:1px}
+
+footer{
+  margin-top:48px; padding-top:20px; border-top:1px solid var(--rule);
+  font-size:13px; color:var(--muted);
+}
+footer h4{margin-top:0}
+footer ul{padding-left:18px}
+footer li{margin-bottom:8px; max-width:64ch}
+a{color:var(--mesh)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+
+@media print{
+  .bar,.saved,button.clear,.export{display:none}
+  body{background:#fff; color:#000; font-size:11pt}
+  .wrap{max-width:none; padding:0}
+  .act{page-break-inside:avoid}
+  .partwrap{page-break-before:always}
+  input.fill{border-bottom:1px solid #999}
+  .tw,.note,.legend,ol.conc li{border-color:#bbb}
+}
+</style>
+
+<div class="wrap">
+
+<div class="bar">
+  <span class="who">Diseñá tu propio fármaco</span>
+  <nav aria-label="Actividades">
+    <a href="#a1">A1</a><a href="#a2">A2</a><a href="#a3">A3</a><a href="#a4">A4</a>
+    <a href="#a5">A5</a><a href="#a6">A6</a><a href="#a7">A7</a>
+    <a href="#b1">B1</a><a href="#b2">B2</a><a href="#b3">B3</a><a href="#b4">B4</a><a href="#b5">B5</a>
+    <a href="#cierre">Cierre</a>
+  </nav>
+</div>
+
+<header class="mast">
+  <p class="kicker">Universidad Siglo 21 · Guía de actividades</p>
+  <p class="tt">Team teaching «Diseñá tu propio fármaco»</p>
+  <h1>Docking molecular:<br>lo que el score no dice</h1>
+  <p class="standfirst">Resultados <strong>reales</strong> de AutoDock Vina 1.2.5 sobre dos blancos
+  terapéuticos. Nada acá está simulado ni maquillado: los casos que funcionan y los que fracasan
+  son los que dio el programa.</p>
+
+  <dl class="facts">
+    <div><dt>Blancos</dt><dd>1HSG · 1M17</dd></div>
+    <div><dt>Ligandos</dt><dd>20 inhibidores + 96 análogos</dd></div>
+    <div><dt>App</dt><dd><a href="https://jonathansemelak.github.io/docking-bench/" target="_blank" rel="noopener">jonathansemelak.github.io/docking-bench</a></dd></div>
+  </dl>
+</header>
+
+<div class="note warn">
+  <span class="tag">Antes de empezar</span>
+  <p>La interfaz de la aplicación está <strong>en inglés</strong>. En esta guía los nombres de botones,
+  pestañas y columnas van <strong>en inglés y resaltados así</strong>: <span class="ui">Docking setup</span>,
+  tal como se leen en pantalla.</p>
+</div>
+
+<section>
+  <h4>Qué se hace en esta clase</h4>
+  <p>El docking molecular (acoplamiento molecular) intenta responder dos preguntas distintas,
+  y conviene no confundirlas nunca:</p>
+  <ol class="steps">
+    <li><strong>¿Dónde y cómo se une el ligando?</strong> Es un problema de <strong>búsqueda</strong>,
+    y se mide con el <strong>RMSD</strong> contra la estructura cristalográfica.</li>
+    <li><strong>¿Con qué fuerza se une?</strong> Es un problema de <strong>puntuación</strong>
+    (<em>scoring</em>), y se mide con el <strong>score</strong>, en kcal/mol.</li>
+  </ol>
+  <p>Van a trabajar sobre la <strong>proteasa de HIV-1</strong> (PDB 1HSG) y el
+  <strong>dominio quinasa de EGFR</strong> (PDB 1M17).</p>
+
+  <h4>Al terminar deberían poder</h4>
+  <ul>
+    <li>interpretar un score y un RMSD, y explicar por qué no miden lo mismo;</li>
+    <li>distinguir un fallo de <strong>búsqueda</strong> de uno de <strong>puntuación</strong>;</li>
+    <li>justificar por qué la <strong>preparación del receptor</strong> puede pesar más que
+    cualquier parámetro del docking;</li>
+    <li>proponer análogos sobre vectores químicos definidos, y discutir hasta dónde el score
+    los puede ordenar.</li>
+  </ul>
+</section>
+
+<section>
+  <h4>Vocabulario mínimo</h4>
+  <div class="tw free">
+    <table>
+      <thead><tr><th>Término</th><th>Qué es</th><th>Regla práctica</th></tr></thead>
+      <tbody>
+        <tr><td class="lbl">Pose</td><td>Una orientación y conformación propuesta del ligando en el sitio</td><td>La app muestra 9 por ligando</td></tr>
+        <tr><td class="lbl">Score</td><td>Energía libre de unión estimada, en kcal/mol</td><td>Más negativo = predicho como mejor unión</td></tr>
+        <tr><td class="lbl">RMSD</td><td>Desviación cuadrática media respecto de la pose cristalográfica, en Å</td><td>Ver la escala de abajo</td></tr>
+        <tr><td class="lbl">Caja de búsqueda</td><td>El volumen dentro del cual el programa puede buscar (<span class="ui">Search box</span>)</td><td>Si la respuesta queda afuera, es imposible acertar</td></tr>
+        <tr><td class="lbl">LE</td><td><em>Ligand efficiency</em>: score dividido por número de átomos pesados</td><td>Corrige el premio automático al tamaño</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="legend">
+    <div class="g"><b>≤ 2 Å</b><span>Acierto</span></div>
+    <div class="a"><b>2 – 4 Å</b><span>Parcial</span></div>
+    <div class="r"><b>&gt; 4 Å</b><span>Fallo</span></div>
+  </div>
+  <p style="font-size:14.5px;color:var(--muted)">En el visor 3D:
+  <span class="swatch" style="background:#7FB2E5"></span><strong>azul claro</strong> = pose calculada
+  (<span class="ui">docked pose</span>) ·
+  <span class="swatch" style="background:#4FBF8B"></span><strong>verde</strong> = pose cristalográfica
+  (<span class="ui">crystal reference</span>). En la tabla <span class="ui">Poses</span>, el RMSD se
+  colorea solo con esa misma escala.</p>
+</section>
+
+<!-- ====================== PARTE A ====================== -->
+<div class="partwrap" id="parte-a">
+  <h2 class="part">Parte A · Pestaña <span class="ui" style="font-size:.7em;vertical-align:middle">Pose</span></h2>
+  <p class="budget">Siete actividades sobre fármacos ya conocidos</p>
+</div>
+
+<div class="note">
+  <span class="tag">Orientación rápida</span>
+  <p>En la barra superior: el selector de modo <span class="ui">Pose</span> / <span class="ui">Design</span>
+  y, a su derecha, los dos blancos (<span class="ui">HIV-1 protease</span> y
+  <span class="ui">EGFR kinase domain</span>). En el panel izquierdo,
+  <span class="ui">Docking setup</span> (las ocho condiciones de cálculo) y
+  <span class="ui">Ligand library</span> (los diez ligandos). El visor 3D ocupa el centro, y debajo
+  la escala <span class="ui">Best score per ligand</span>. El panel derecho, de arriba abajo:
+  la tabla <span class="ui">Poses</span> (columnas <em>Rank, Score, RMSD, LE</em>), los datos del
+  ligando y las casillas <span class="ui">Display</span>.</p>
+  <p><strong>Punto de partida:</strong> modo <span class="ui">Pose</span>, setup
+  <span class="ui amb">Standard, 24 A, exh 8</span>, y la casilla
+  <span class="ui">Crystal reference pose</span> activada.</p>
+</div>
+
+<section class="act" id="a1">
+  <div class="head"><span class="code">A1</span><h3>El control que hay que hacer siempre</h3></div>
+  <p>Blanco <span class="ui">HIV-1 protease</span>, ligando <span class="ui">Indinavir</span>
+  (aparece etiquetado <em>redocked</em>: es el ligando que venía en ese cristal).</p>
+  <ol class="steps">
+    <li>Anotar el score y el RMSD de la pose <span class="num">#1</span>.</li>
+    <li>Girar el visor y comparar la pose azul con la verde.</li>
+  </ol>
+  <div class="tw">
+    <table>
+      <thead><tr><th></th><th class="n">Score (kcal/mol)</th><th class="n">RMSD (Å)</th></tr></thead>
+      <tbody><tr><td class="lbl">Indinavir, pose #1</td>
+        <td><input class="fill" id="a1s" aria-label="Score de indinavir"></td>
+        <td><input class="fill" id="a1r" aria-label="RMSD de indinavir"></td></tr></tbody>
+    </table>
+  </div>
+  <ol class="q">
+    <li><span class="lab">a</span>¿Este resultado es un acierto o un fallo? ¿Con qué criterio lo deciden?</li>
+    <li><span class="lab">b</span>Este cálculo se llama <em>redocking</em>: se saca el ligando de su propio
+    cristal y se lo vuelve a colocar. ¿Por qué un resultado así <strong>no</strong> demuestra que el método
+    vaya a funcionar con una molécula nueva?</li>
+  </ol>
+</section>
+
+<section class="act" id="a2">
+  <div class="head"><span class="code">A2</span><h3>El caso central: el mejor score en el lugar equivocado</h3></div>
+  <p>Cambiar el blanco a <span class="ui">EGFR kinase domain</span> y elegir
+  <span class="ui">Erlotinib</span> (también <em>redocked</em>: 1M17 es su propio cristal).</p>
+  <ol class="steps">
+    <li>Anotar score y RMSD de la pose <span class="num">#1</span>.</li>
+    <li>Recorrer la tabla <span class="ui">Poses</span> completa, haciendo clic en cada fila y mirando
+    cómo se mueve la molécula azul respecto de la verde.</li>
+    <li>Encontrar <strong>la pose de menor RMSD</strong> de las nueve, y anotar su rango y su score.</li>
+  </ol>
+  <div class="tw">
+    <table>
+      <thead><tr><th></th><th class="n">Rango</th><th class="n">Score</th><th class="n">RMSD</th></tr></thead>
+      <tbody>
+        <tr><td class="lbl">Pose mejor puntuada</td><td class="n">#1</td>
+          <td><input class="fill" id="a2s1" aria-label="Score de la pose 1"></td>
+          <td><input class="fill" id="a2r1" aria-label="RMSD de la pose 1"></td></tr>
+        <tr><td class="lbl">Pose más parecida al cristal</td>
+          <td><input class="fill" id="a2k" aria-label="Rango de la pose más parecida"></td>
+          <td><input class="fill" id="a2s2" aria-label="Score de esa pose"></td>
+          <td><input class="fill" id="a2r2" aria-label="RMSD de esa pose"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ol class="q">
+    <li><span class="lab">a</span>¿Cuántas kcal/mol separan a esas dos poses?</li>
+    <li><span class="lab">b</span>El programa <strong>encontró</strong> la pose correcta pero la
+    <strong>ranqueó</strong> por debajo de otras cuatro. ¿Esto es un fallo de búsqueda o de puntuación? Justificar.</li>
+    <li><span class="lab">c</span>Si esta molécula fuera desconocida y no existiera el cristal para compararla,
+    ¿qué pose habrían elegido? ¿Cómo se habrían dado cuenta del error?</li>
+    <li><span class="lab">d</span>Leer el aviso rojo <span class="ui">Best score, wrong pose</span> del panel
+    derecho. En la lista de ligandos, contar cuántos llevan la etiqueta roja
+    <span class="ui">top pose off</span> en este blanco.</li>
+  </ol>
+</section>
+
+<section class="act" id="a3">
+  <div class="head"><span class="code">A3</span><h3>¿Y si buscamos más?</h3></div>
+  <p>Sin cambiar de ligando, pasar el selector <span class="ui">Docking setup</span> de
+  <span class="ui amb">Standard, 24 A, exh 8</span> a <span class="ui amb">Standard box, exh 32</span>.
+  El parámetro <em>exhaustiveness</em> multiplica por cuatro el esfuerzo de búsqueda.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Setup</th><th class="n">Score #1</th><th class="n">RMSD #1</th></tr></thead>
+      <tbody>
+        <tr><td class="lbl">Standard, 24 A, exh 8</td>
+          <td><input class="fill" id="a3s1" aria-label="Score exh 8"></td>
+          <td><input class="fill" id="a3r1" aria-label="RMSD exh 8"></td></tr>
+        <tr><td class="lbl">Standard box, exh 32</td>
+          <td><input class="fill" id="a3s2" aria-label="Score exh 32"></td>
+          <td><input class="fill" id="a3r2" aria-label="RMSD exh 32"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ol class="q">
+    <li><span class="lab">a</span>¿Mejoró? ¿Por qué el resultado es coherente con la conclusión de A2?</li>
+    <li><span class="lab">b</span>Escribir en una frase en qué caso <strong>sí</strong> esperarían que
+    aumentar <em>exhaustiveness</em> cambie el resultado.</li>
+  </ol>
+</section>
+
+<section class="act" id="a4">
+  <div class="head"><span class="code">A4</span><h3>La caja: el error que no se puede recuperar</h3></div>
+  <p>Activar en <span class="ui">Display</span> la casilla <span class="ui">Search box</span> para ver el
+  volumen de búsqueda. Probar sobre el mismo ligando los setups
+  <span class="ui amb">Tight box, 18 A</span>, <span class="ui amb">Loose box, 34 A</span>,
+  <span class="ui amb">Blind, whole protein</span> y <span class="ui amb">Mis-centred by 6 A</span>.</p>
+  <ol class="steps">
+    <li>Volver al blanco <span class="ui">HIV-1 protease</span>, ligando
+    <span class="ui">Indinavir</span>, y poner el setup <span class="ui amb">Mis-centred by 6 A</span>
+    (la caja corrida 6 Å respecto del sitio).</li>
+    <li>Leer el recuadro <span class="ui">The crystal pose is outside this box</span> en el panel derecho.</li>
+  </ol>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Setup</th><th class="n">Score #1</th><th class="n">RMSD #1</th><th>¿Aviso de pose fuera de la caja?</th></tr></thead>
+      <tbody>
+        <tr><td class="lbl">Standard, 24 A, exh 8</td>
+          <td><input class="fill" id="a4s1" aria-label="Score estándar"></td>
+          <td><input class="fill" id="a4r1" aria-label="RMSD estándar"></td>
+          <td><input class="fill" id="a4w1" aria-label="Aviso estándar"></td></tr>
+        <tr><td class="lbl">Mis-centred by 6 A</td>
+          <td><input class="fill" id="a4s2" aria-label="Score descentrado"></td>
+          <td><input class="fill" id="a4r2" aria-label="RMSD descentrado"></td>
+          <td><input class="fill" id="a4w2" aria-label="Aviso descentrado"></td></tr>
+        <tr><td class="lbl">Blind, whole protein</td>
+          <td><input class="fill" id="a4s3" aria-label="Score ciego"></td>
+          <td><input class="fill" id="a4r3" aria-label="RMSD ciego"></td>
+          <td><input class="fill" id="a4w3" aria-label="Aviso ciego"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ol class="q">
+    <li><span class="lab">a</span>En <span class="ui amb">Mis-centred by 6 A</span> el score sigue siendo muy
+    negativo pero el RMSD es enorme. ¿Por qué sería un error decir que "falló la función de puntuación"?</li>
+    <li><span class="lab">b</span>¿Qué ventaja y qué costo tiene el docking a ciegas
+    (<span class="ui amb">Blind, whole protein</span>), que no necesita saber dónde está el sitio?</li>
+    <li><span class="lab">c</span>¿Por qué una caja demasiado chica puede ser tan mala como una mal centrada?</li>
+  </ol>
+</section>
+
+<section class="act" id="a5">
+  <div class="head"><span class="code">A5</span><h3>Cambiar la función de puntuación</h3></div>
+  <p>Volver a <span class="ui">EGFR kinase domain</span> / <span class="ui">Erlotinib</span> y elegir el setup
+  <span class="ui amb">Vinardo scoring</span>. Vinardo usa <strong>exactamente la misma búsqueda</strong>
+  que Vina: lo único que cambia es cómo se puntúan las poses encontradas.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Ligando</th><th>Setup</th><th class="n">Score #1</th><th class="n">RMSD #1</th></tr></thead>
+      <tbody>
+        <tr><td class="lbl">Erlotinib</td><td>Standard</td>
+          <td><input class="fill" id="a5s1" aria-label="Score erlotinib estándar"></td>
+          <td><input class="fill" id="a5r1" aria-label="RMSD erlotinib estándar"></td></tr>
+        <tr><td class="lbl">Erlotinib</td><td>Vinardo</td>
+          <td><input class="fill" id="a5s2" aria-label="Score erlotinib vinardo"></td>
+          <td><input class="fill" id="a5r2" aria-label="RMSD erlotinib vinardo"></td></tr>
+        <tr><td class="lbl">Atazanavir <em>(HIV)</em></td><td>Standard</td>
+          <td><input class="fill" id="a5s3" aria-label="Score atazanavir estándar"></td>
+          <td><input class="fill" id="a5r3" aria-label="RMSD atazanavir estándar"></td></tr>
+        <tr><td class="lbl">Atazanavir <em>(HIV)</em></td><td>Vinardo</td>
+          <td><input class="fill" id="a5s4" aria-label="Score atazanavir vinardo"></td>
+          <td><input class="fill" id="a5r4" aria-label="RMSD atazanavir vinardo"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ol class="q">
+    <li><span class="lab">a</span>¿Qué pasó con el RMSD? ¿Y con el valor absoluto del score?</li>
+    <li><span class="lab">b</span>Un compañero compara el score Vina de un ligando con el score Vinardo de otro
+    y concluye cuál es mejor. ¿Qué error está cometiendo?</li>
+    <li><span class="lab">c</span>Revisar también <span class="ui">Lapatinib</span> y
+    <span class="ui">Neratinib</span> con Vinardo. ¿Mejora <em>todos</em> los ligandos? ¿Qué dice esto sobre
+    "elegir la mejor función"?</li>
+  </ol>
+</section>
+
+<section class="act" id="a6">
+  <div class="head"><span class="code">A6</span><h3>Una molécula de agua</h3></div>
+  <p>Blanco <span class="ui">HIV-1 protease</span> — <strong>esta actividad se hace solo acá</strong>.
+  Todos los setups anteriores se corrieron con el receptor <strong>sin aguas</strong>, que es la práctica
+  habitual. El setup <span class="ui amb">Standard + flap water</span> devuelve al sitio las aguas
+  conservadas que puentean los <em>flaps</em> (Ile50/Ile50') con el ligando.</p>
+  <div class="tw">
+    <table>
+      <caption>Comparar Standard contra Standard + flap water</caption>
+      <thead><tr><th>Ligando</th><th class="n">RMSD seco</th><th class="n">RMSD con agua</th><th>¿Mejora?</th></tr></thead>
+      <tbody>
+        <tr><td class="lbl">Saquinavir</td>
+          <td><input class="fill" id="a6d1" aria-label="Saquinavir seco"></td>
+          <td><input class="fill" id="a6w1" aria-label="Saquinavir con agua"></td>
+          <td><input class="fill" id="a6m1" aria-label="Saquinavir mejora"></td></tr>
+        <tr><td class="lbl">Ritonavir</td>
+          <td><input class="fill" id="a6d2" aria-label="Ritonavir seco"></td>
+          <td><input class="fill" id="a6w2" aria-label="Ritonavir con agua"></td>
+          <td><input class="fill" id="a6m2" aria-label="Ritonavir mejora"></td></tr>
+        <tr><td class="lbl">Indinavir</td>
+          <td><input class="fill" id="a6d3" aria-label="Indinavir seco"></td>
+          <td><input class="fill" id="a6w3" aria-label="Indinavir con agua"></td>
+          <td><input class="fill" id="a6m3" aria-label="Indinavir mejora"></td></tr>
+        <tr><td class="lbl">Tipranavir</td>
+          <td><input class="fill" id="a6d4" aria-label="Tipranavir seco"></td>
+          <td><input class="fill" id="a6w4" aria-label="Tipranavir con agua"></td>
+          <td><input class="fill" id="a6m4" aria-label="Tipranavir mejora"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ol class="q">
+    <li><span class="lab">a</span>¿Cuál es la mejora más grande que vieron en toda la Parte A? ¿Vino de un
+    parámetro del docking o de la preparación del receptor?</li>
+    <li><span class="lab">b</span><strong>Tipranavir empeora.</strong> Es un inhibidor <strong>no peptídico</strong>
+    que contacta directamente los NH de los <em>flaps</em>. Proponer una explicación física.</li>
+    <li><span class="lab">c</span>¿Por qué EGFR no tiene versión "con agua" en esta app?</li>
+  </ol>
+</section>
+
+<section class="act" id="a7">
+  <div class="head"><span class="code">A7</span><h3>¿El score predice la potencia?</h3></div>
+  <p>Blanco <span class="ui">HIV-1 protease</span>, setup <span class="ui amb">Standard, 24 A, exh 8</span>.
+  El panel derecho muestra, para cada ligando, el dato
+  <span class="ui">Experimental Ki / IC₅₀</span>. Completar y <strong>ordenar las dos columnas por
+  separado</strong>.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Ligando</th><th class="n">Ki / Kd exp.</th><th class="n">Score #1</th><th class="n">Puesto exp.</th><th class="n">Puesto score</th></tr></thead>
+      <tbody id="a7body"></tbody>
+    </table>
+  </div>
+  <ol class="q">
+    <li><span class="lab">a</span>¿Coinciden los dos ordenamientos? Comparar en particular
+    <strong>Darunavir</strong> (el más potente de la tabla) con <strong>Indinavir</strong>.</li>
+    <li><span class="lab">b</span>Si el score no ordena por potencia, ¿para qué sirve el docking en un
+    proyecto real? Escribir dos usos legítimos.</li>
+  </ol>
+</section>
+
+<!-- ====================== PARTE B ====================== -->
+<div class="partwrap" id="parte-b">
+  <h2 class="part">Parte B · Pestaña <span class="ui" style="font-size:.7em;vertical-align:middle">Design</span></h2>
+  <p class="budget">De comparar fármacos a construirlos</p>
+</div>
+
+<section>
+  <p>Sobre el núcleo <strong>4-anilinoquinazolina</strong> —el esqueleto que comparten erlotinib y
+  gefitinib— se cuelgan sustituyentes en dos posiciones. Leer el panel
+  <span class="ui">Growth vectors</span>: los dos vectores apuntan en direcciones opuestas.</p>
+  <div class="tw free">
+    <table>
+      <thead><tr><th>Vector</th><th>Posición</th><th>Apunta a</th></tr></thead>
+      <tbody>
+        <tr><td class="lbl">R1</td><td><em>meta</em> de la anilina</td>
+          <td>el <strong>bolsillo hidrofóbico posterior</strong>, pasando el residuo guardián
+          (<em>gatekeeper</em>) <strong>Thr766</strong></td></tr>
+        <tr><td class="lbl">R2</td><td>6 de la quinazolina</td>
+          <td><strong>fuera del sitio, hacia el solvente</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Los 96 análogos están precalculados: los dibujos resaltan <strong>R1 en azul</strong> y
+  <strong>R2 en ámbar</strong>, de modo que siempre se ve qué acaba de cambiar.</p>
+
+  <div class="note">
+    <span class="tag">Cómo se opera</span>
+    <p>Hacer clic en <strong>R1</strong> o <strong>R2</strong> (panel <span class="ui">Growth vectors</span>)
+    para elegir el vector activo; la galería de abajo, bajo el rótulo
+    <span class="ui">Where do you want to go?</span>, muestra las opciones <strong>de ese vector</strong> y
+    un clic las aplica. La estructura 2D se actualiza al instante, junto con el panel
+    <span class="ui">Properties</span> —donde cada propiedad se compara contra el núcleo desnudo— y las
+    cuatro insignias de Lipinski (<span class="num">MW≤500</span>, <span class="num">logP≤5</span>,
+    <span class="num">HBD≤5</span>, <span class="num">HBA≤10</span>), verdes o rojas. El visor 3D del
+    bolsillo queda arriba a la izquierda, con un botón <span class="ui">Expand</span> para verlo a
+    pantalla completa.</p>
+  </div>
+</section>
+
+<section class="act" id="b1">
+  <div class="head"><span class="code">B1</span><h3>Dibujar un fármaco real</h3></div>
+  <ol class="steps">
+    <li>Partir del núcleo desnudo (R1 = <em>hydrogen</em>, R2 = <em>hydrogen</em>).</li>
+    <li>Seleccionar el vector <strong>R1</strong> y elegir <em>ethynyl</em> en la galería.</li>
+    <li>Seleccionar <strong>R2</strong> y elegir <em>2-methoxyethoxy</em>.</li>
+  </ol>
+  <ol class="q">
+    <li><span class="lab">a</span>¿Qué nombre aparece debajo de la estructura?</li>
+    <li><span class="lab">b</span>Probar ahora R1 = <em>chloro</em> con R2 = <em>3-morpholinopropoxy</em>.
+    ¿Qué fármaco se parece a este?</li>
+    <li><span class="lab">c</span>Mirar el panel <span class="ui">Properties</span>: ¿cuánto cambió el peso
+    molecular respecto del núcleo desnudo?</li>
+  </ol>
+</section>
+
+<section class="act" id="b2">
+  <div class="head"><span class="code">B2</span><h3>Explorar un vector por vez</h3></div>
+  <p>Volver R2 a <em>hydrogen</em> y dejar <strong>solo R1</strong> variando. Usar los botones de sugerencia
+  (<span class="ui">Make it bigger here</span>, <span class="ui">Something greasier</span>,
+  <span class="ui">Something more polar</span>) para reordenar la galería, y leer la línea de comentario
+  que aparece sobre ellos. Probar al menos: <em>fluoro</em>, <em>methyl</em>, <em>ethynyl</em>,
+  <em>cyclopropyl</em>, <em>phenyl</em>, <em>methoxy</em>.</p>
+  <ol class="q">
+    <li><span class="lab">a</span>¿Qué grupo dispara el aviso <span class="ui">Bulky</span>?
+    ¿Contra qué residuo advierte?</li>
+    <li><span class="lab">b</span>Poner un grupo polar en R1 (<em>hydroxyl</em>, <em>nitrile</em>): aparece el
+    aviso <span class="ui">Mismatch</span>. Explicar con la palabra <strong>desolvatación</strong> por qué es
+    costoso meter un grupo polar en un bolsillo hidrofóbico.</li>
+    <li><span class="lab">c</span>Repetir lo mismo en <strong>R2</strong> con <em>3-morpholinopropoxy</em> o
+    <em>2-piperazinylethoxy</em>. ¿Por qué ahí no se dispara ninguna advertencia?</li>
+    <li><span class="lab">d</span>Activar <span class="ui">Pocket residues, by H-bond role</span> en el panel
+    del visor. Buscar <strong>Thr766</strong> y <strong>Lys721</strong>. ¿Qué tipo de grupo convendría apuntar
+    hacia cada uno?</li>
+  </ol>
+</section>
+
+<section class="act" id="b3">
+  <div class="head"><span class="code">B3</span><h3>Docking de análogos propios</h3></div>
+  <p>Elegir <strong>cuatro</strong> análogos: dos que crean buenos y dos que crean malos. Para cada uno,
+  apretar <span class="ui">Dock this analog</span> y anotar el resultado. La espera de cuatro segundos
+  no es decorativa: la barra muestra las tres etapas reales del cálculo.
+  <strong>Antes de docar cada uno, escribir la predicción.</strong> Los scores quedan visibles en las
+  tarjetas de la galería para comparar.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th class="n">#</th><th>R1</th><th>R2</th><th>Predicción <em>(mejor / peor que erlotinib)</em></th><th class="n">Score</th></tr></thead>
+      <tbody id="b3body"></tbody>
+    </table>
+  </div>
+  <div class="tw">
+    <table>
+      <caption>Referencias obligatorias para comparar</caption>
+      <thead><tr><th>Referencia</th><th>R1</th><th>R2</th><th class="n">Score</th></tr></thead>
+      <tbody>
+        <tr><td class="lbl">Erlotinib</td><td>ethynyl</td><td>2-methoxyethoxy</td>
+          <td><input class="fill" id="b3ref1" aria-label="Score de erlotinib"></td></tr>
+        <tr><td class="lbl">Núcleo desnudo</td><td>hydrogen</td><td>hydrogen</td>
+          <td><input class="fill" id="b3ref2" aria-label="Score del núcleo desnudo"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="export">
+    <span class="tag">Subir a la planilla de clase</span>
+    <div class="who">
+      <label for="pareja">Estudiantes</label>
+      <input id="pareja" placeholder="Apellidos, o el número de grupo" autocomplete="off">
+    </div>
+    <p>Se arma sola con lo que cargaron arriba — una fila por análogo:</p>
+    <textarea class="tsv" id="tsv" readonly aria-label="Filas listas para pegar en la planilla"></textarea>
+    <div class="actions">
+      <button class="go" id="btnCopy" type="button">Copiar filas</button>
+      <a class="sheet" id="lnkSheet" href="https://docs.google.com/spreadsheets/d/1Yv7o8EZ0DfMaYWOfijEJVUX4r5ZJUb-0d1eXeOj7Do0/edit" target="_blank" rel="noopener">Abrir la planilla</a>
+      <span class="status" id="copyMsg"></span>
+    </div>
+    <p style="margin:11px 0 0;color:var(--muted);font-size:13px">Pegar en la
+    <strong>primera fila vacía</strong> de la planilla: cada análogo entra en su propia fila y las
+    columnas se acomodan solas.</p>
+  </div>
+
+  <ol class="q">
+    <li><span class="lab">a</span>¿Cuántas kcal/mol separan al <strong>mejor</strong> análogo que encontraron
+    del <strong>núcleo desnudo</strong>?</li>
+    <li><span class="lab">b</span>El núcleo desnudo tiene 22 átomos pesados; erlotinib, 29. Comparar sus
+    scores. ¿Qué tiene de incómodo ese resultado?</li>
+    <li><span class="lab">c</span>Los 96 análogos caben en un rango total de <strong>menos de 2 kcal/mol</strong>.
+    Sabiendo que el error típico de estas funciones ronda 1–2 kcal/mol, ¿qué se puede afirmar honestamente al
+    ordenar esta serie por score?</li>
+  </ol>
+</section>
+
+<section class="act" id="b4">
+  <div class="head"><span class="code">B4</span><h3>Eficiencia de ligando</h3></div>
+  <p>El score casi siempre premia a la molécula más grande: más átomos, más contactos. La
+  <strong>eficiencia de ligando</strong> corrige eso.</p>
+  <div class="note">
+    <p style="font-family:var(--mono);font-size:15px"><strong>LE = score / número de átomos pesados</strong>
+    <span style="color:var(--muted)">(kcal/mol por átomo)</span></p>
+  </div>
+  <p>Calcular la LE de los análogos de B3 usando el número de átomos pesados que figura en
+  <span class="ui">Properties</span>, e incluir estas dos referencias:</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Análogo</th><th class="n">Score</th><th class="n">Át. pesados</th><th class="n">LE</th></tr></thead>
+      <tbody>
+        <tr><td class="lbl">methyl + hydroxyl</td>
+          <td><input class="fill" id="b4s1" aria-label="Score metilo hidroxilo"></td>
+          <td class="n">24</td>
+          <td><input class="fill" id="b4l1" aria-label="LE metilo hidroxilo"></td></tr>
+        <tr><td class="lbl">phenyl + 3-morpholinopropoxy</td>
+          <td><input class="fill" id="b4s2" aria-label="Score fenilo morfolinopropoxi"></td>
+          <td class="n">38</td>
+          <td><input class="fill" id="b4l2" aria-label="LE fenilo morfolinopropoxi"></td></tr>
+        <tr><td class="lbl">Propio 1</td>
+          <td><input class="fill" id="b4s3" aria-label="Score propio 1"></td>
+          <td><input class="fill" id="b4h3" aria-label="Átomos pesados propio 1"></td>
+          <td><input class="fill" id="b4l3" aria-label="LE propio 1"></td></tr>
+        <tr><td class="lbl">Propio 2</td>
+          <td><input class="fill" id="b4s4" aria-label="Score propio 2"></td>
+          <td><input class="fill" id="b4h4" aria-label="Átomos pesados propio 2"></td>
+          <td><input class="fill" id="b4l4" aria-label="LE propio 2"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ol class="q">
+    <li><span class="lab">a</span>¿Cuál gana por score y cuál gana por LE? ¿Son el mismo?</li>
+    <li><span class="lab">b</span>En una campaña real se parte de fragmentos pequeños con buena LE y se crece
+    desde ahí. ¿Qué justifica esa estrategia, a la luz de lo que acaban de calcular?</li>
+  </ol>
+</section>
+
+<section class="act" id="b5">
+  <div class="head"><span class="code">B5</span><h3>El costo de crecer</h3></div>
+  <p>Construir R1 = <em>phenyl</em> + R2 = <em>3-morpholinopropoxy</em> y mirar el panel
+  <span class="ui">Properties</span> junto con las insignias de Lipinski.</p>
+  <ol class="q">
+    <li><span class="lab">a</span>¿Qué aviso aparece y a partir de qué peso molecular? ¿Qué
+    <strong>segunda</strong> regla de Lipinski rompe además este análogo?</li>
+    <li><span class="lab">a bis</span>Cambiar R2 a <em>2-piperazinylethoxy</em>
+    (PM <span class="num">499,6</span>): el aviso desaparece. ¿Es químicamente distinta esta molécula de la
+    anterior? ¿Qué dice esto sobre usar umbrales fijos como criterio de decisión?</li>
+    <li><span class="lab">b</span>Un análogo con mejor score pero PM &gt; 500 y muchos enlaces rotables,
+    ¿es mejor candidato? Nombrar dos propiedades que el score <strong>no</strong> mide.</li>
+    <li><span class="lab">c</span><strong>Pregunta final.</strong> Promediando los 96 análogos, el grupo R2 con
+    mejor score es el <strong>hidroxilo</strong>, y el peor es justamente el <strong>2-metoxietoxi</strong> que
+    lleva erlotinib. Sin embargo la química medicinal real eligió el segundo. Proponer al menos dos razones.</li>
+  </ol>
+</section>
+
+<!-- ====================== CIERRE ====================== -->
+<div class="close" id="cierre">
+  <h2 class="part">Cierre y discusión</h2>
+  <p>Escribir, en no más de tres renglones cada una, las conclusiones de la clase:</p>
+  <ol class="conc">
+    <li>Un fallo de <strong>búsqueda</strong> y un fallo de <strong>puntuación</strong> se distinguen porque…
+      <textarea class="conc" id="c1" aria-label="Conclusión 1"></textarea></li>
+    <li>La decisión que más impactó en los resultados de toda la guía fue…
+      <textarea class="conc" id="c2" aria-label="Conclusión 2"></textarea></li>
+    <li>Frente a un score de <span class="num">−9,5</span> kcal/mol para una molécula nueva, lo que se puede
+      afirmar es… y lo que <strong>no</strong> se puede afirmar es…
+      <textarea class="conc" id="c3" aria-label="Conclusión 3"></textarea></li>
+  </ol>
+  <div class="note">
+    <span class="tag">Para llevarse</span>
+    <p>Todos los resultados de esta guía son salida real de Vina. Nadie eligió los ejemplos para que fallaran:
+    se docó un conjunto de fármacos aprobados en sus propios blancos, y esto fue lo que salió.</p>
+  </div>
+</div>
+
+<footer>
+  <h4>Notas</h4>
+  <ul>
+    <li>Los residuos de EGFR aparecen con dos numeraciones distintas según el panel: la de la estructura 1M17
+    (<strong>Thr766</strong>, <strong>Lys721</strong>, <strong>Met769</strong>) y la de la proteína madura
+    (<strong>Thr790</strong>, <strong>Lys745</strong>, <strong>Met793</strong>). Se diferencian en 24 posiciones
+    y designan el mismo residuo.</li>
+    <li>La etiqueta verde <span class="ui">vina</span> junto a un score indica que es un cálculo real.
+    Si apareciera una etiqueta ámbar <span class="ui amb">mock</span>, ese número es un marcador de posición
+    y no debe usarse.</li>
+  </ul>
+  <div class="saved">
+    <span class="dot" aria-hidden="true"></span>
+    <span id="savedMsg">Lo que escribas se guarda en este navegador.</span>
+    <button class="clear" id="btnClear" type="button">Borrar mis respuestas</button>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* A7 — la tabla de potencia, generada para no repetir markup */
+  var LIGANDS=['Lopinavir','Darunavir','Ritonavir','Saquinavir','Indinavir','Amprenavir','Nelfinavir'];
+  var tb=document.getElementById('a7body');
+  LIGANDS.forEach(function(name,i){
+    var tr=document.createElement('tr');
+    var td=document.createElement('td'); td.className='lbl'; td.textContent=name; tr.appendChild(td);
+    ['ki','sc','pe','ps'].forEach(function(k){
+      var c=document.createElement('td');
+      var inp=document.createElement('input');
+      inp.className='fill'; inp.id='a7'+k+i;
+      inp.setAttribute('aria-label',name+' '+k);
+      c.appendChild(inp); tr.appendChild(c);
+    });
+    tb.appendChild(tr);
+  });
+
+  /* B3 — cuatro filas en blanco */
+  var b3=document.getElementById('b3body');
+  for(var i=1;i<=4;i++){
+    var tr=document.createElement('tr');
+    var n=document.createElement('td'); n.className='n'; n.textContent=i; tr.appendChild(n);
+    ['r1','r2','pred','score'].forEach(function(k){
+      var c=document.createElement('td');
+      var inp=document.createElement('input');
+      inp.className='fill'; inp.id='b3'+k+i;
+      inp.setAttribute('aria-label','Análogo '+i+' '+k);
+      c.appendChild(inp); tr.appendChild(c);
+    });
+    b3.appendChild(tr);
+  }
+
+  /* Borrador local. Puede fallar (ventana privada, datos bloqueados):
+     la página tiene que funcionar igual. */
+  var KEY='dockbench-guia-v1';
+  var fields=[].slice.call(document.querySelectorAll('input.fill, textarea.conc'));
+  var msg=document.getElementById('savedMsg');
+  var ok=true;
+
+  function read(){
+    try{ return JSON.parse(localStorage.getItem(KEY)||'{}') }catch(e){ ok=false; return {} }
+  }
+  function write(d){
+    try{ localStorage.setItem(KEY,JSON.stringify(d)) }
+    catch(e){
+      if(ok){ ok=false; msg.textContent='Este navegador no guarda las respuestas — copialas antes de cerrar.' }
+    }
+  }
+
+  var data=read();
+  if(!ok){ msg.textContent='Este navegador no guarda las respuestas — copialas antes de cerrar.' }
+  fields.forEach(function(f){ if(data[f.id]!=null) f.value=data[f.id] });
+
+  var t=null;
+  fields.forEach(function(f){
+    f.addEventListener('input',function(){
+      data[f.id]=f.value;
+      clearTimeout(t);
+      t=setTimeout(function(){ write(data) },250);
+    });
+  });
+
+  /* Filas listas para pegar en la planilla de clase. Las columnas siguen el
+     encabezado de la planilla: Pareja, Análogo, R1, R2, Predicción, Score. */
+  var tsvBox=document.getElementById('tsv');
+  var pareja=document.getElementById('pareja');
+  var copyMsg=document.getElementById('copyMsg');
+
+  function val(id){ var e=document.getElementById(id); return e&&e.value?e.value.trim():'' }
+
+  function buildTSV(){
+    var who=pareja.value.trim();
+    var rows=[];
+    for(var i=1;i<=4;i++){
+      var r1=val('b3r1'+i), r2=val('b3r2'+i), pr=val('b3pred'+i), sc=val('b3score'+i);
+      if(!r1 && !r2 && !sc) continue;
+      rows.push([who,i,r1,r2,pr,sc].join('\t'));
+    }
+    if(!rows.length){
+      tsvBox.value='';
+      tsvBox.placeholder='Completá la tabla de arriba y las filas aparecen acá.';
+      return;
+    }
+    tsvBox.value=rows.join('\n');
+  }
+
+  fields.push(pareja);
+  pareja.addEventListener('input',function(){
+    data[pareja.id]=pareja.value;
+    clearTimeout(t); t=setTimeout(function(){ write(data) },250);
+  });
+  if(data[pareja.id]!=null) pareja.value=data[pareja.id];
+  document.addEventListener('input',buildTSV);
+  buildTSV();
+
+  document.getElementById('btnCopy').addEventListener('click',function(){
+    if(!tsvBox.value){ copyMsg.textContent='Todavía no hay nada que copiar.'; return }
+    tsvBox.focus(); tsvBox.select();
+    function fallback(){ copyMsg.textContent='Seleccionado — copiá con Ctrl+C (Cmd+C en Mac).' }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(tsvBox.value).then(function(){
+        copyMsg.textContent='Copiado. Pegá en la planilla.';
+      },fallback);
+    } else { fallback() }
+  });
+
+  document.getElementById('btnClear').addEventListener('click',function(){
+    if(!window.confirm('¿Borrar todo lo que escribiste en esta guía?')) return;
+    fields.forEach(function(f){ f.value='' });
+    data={};
+    try{ localStorage.removeItem(KEY) }catch(e){}
+    buildTSV(); copyMsg.textContent='';
+  });
+})();
+</script>

@@ -17,7 +17,9 @@ and nothing to compute at runtime.
 | `GUIA-ACTIVIDADES.md` | A 90-minute classroom activity guide, in Spanish, covering both tabs. |
 | `GUIA-ACTIVIDADES-CLAVE.md` | The answer key for it. Every number checked against the dataset. Do not hand out. |
 | `GUIA-ACTIVIDADES.pdf` | The same guide as a fillable PDF form — students type into it and save. |
-| `build_guia_pdf.py` | Regenerates that PDF. Needs `reportlab`. |
+| `GUIA-ACTIVIDADES-CLAVE.pdf` | The answer key as a PDF. Do not hand out. |
+| `guia.html` | The guide as a styled web page with fill-in fields, servable next to `index.html`. |
+| `build_guia_pdf.py`, `build_clave_pdf.py` | Regenerate the two PDFs. Need `reportlab`. |
 
 `data.json` is produced by `pipeline/`, which is in this repo and runs offline
 once prepared. `analogs.json` was built by an RDKit enumeration script that is
@@ -140,12 +142,24 @@ the key.
 The guide quotes every button and column label in English, as they appear in the
 app, so nothing has to be translated in the room.
 
-`GUIA-ACTIVIDADES.pdf` is the same guide as a **fillable PDF form**: 101 named
-text fields, so students type their numbers straight into it in Acrobat Reader,
-macOS Preview or the browser's own viewer, and save a copy. Field names match the
-input ids of the HTML version, so the two stay in step. Regenerate it with
-`python3 build_guia_pdf.py` after editing — the script holds its own copy of the
-text and does not read the markdown.
+The material is branded for the **Universidad Siglo 21** team teaching
+*Diseñá tu propio fármaco*, and carries no timings — pace it however the session
+runs. The teacher key keeps a suggested schedule.
+
+It ships in three shapes, all with the same content:
+
+- `GUIA-ACTIVIDADES.md` — the source to read and edit.
+- `guia.html` — a styled page whose tables are fill-in fields; answers are kept
+  in the student's own browser, and a block at the end of B3 builds the rows to
+  paste into the shared class spreadsheet. Serve it next to `index.html`.
+- `GUIA-ACTIVIDADES.pdf` — a **fillable PDF form**: 101 named text fields, so
+  students type into it in Acrobat Reader, macOS Preview or the browser's own
+  viewer and save a copy. Field names match the input ids of the HTML version.
+
+Regenerate the PDFs with `python3 build_guia_pdf.py` and
+`python3 build_clave_pdf.py`. **Each script holds its own copy of the text and
+does not read the markdown**, so a change to the guide has to be made in the
+markdown, in `guia.html` and in the matching script.
 
 ## Design mode
 

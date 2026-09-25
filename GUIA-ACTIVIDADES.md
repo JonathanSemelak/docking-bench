@@ -1,6 +1,8 @@
 # Docking molecular: guía de actividades
 
-**Duración:** 90 minutos · **Modalidad:** en clase, en parejas · **App:** https://jonathansemelak.github.io/docking-bench/
+**Universidad Siglo 21** · Team teaching **«Diseñá tu propio fármaco»**
+
+**App:** https://jonathansemelak.github.io/docking-bench/
 
 > La interfaz de la aplicación está en inglés. En esta guía los nombres de
 > botones, pestañas y columnas aparecen **entre comillas y en inglés**, tal como
@@ -50,7 +52,7 @@ RMSD se colorea solo: verde ≤ 2 Å, ámbar ≤ 4 Å, rojo > 4 Å.
 
 ---
 
-# PARTE A — Pestaña "Pose" (45 min)
+# PARTE A — Pestaña "Pose"
 
 **Orientación rápida.** En la barra superior están, en este orden: el selector de
 modo **"Pose" / "Design"** y, a su derecha, los dos blancos
@@ -64,7 +66,7 @@ los datos del ligando y las casillas **"Display"**.
 Antes de empezar: modo **"Pose"**, setup **"Standard, 24 A, exh 8"**, y la casilla
 **"Crystal reference pose"** activada.
 
-## A1. El control que hay que hacer siempre (5 min)
+## A1. El control que hay que hacer siempre
 
 Blanco **"HIV-1 protease"**, ligando **"Indinavir"** (aparece etiquetado
 *redocked*: es el ligando que venía en ese cristal).
@@ -83,7 +85,7 @@ Blanco **"HIV-1 protease"**, ligando **"Indinavir"** (aparece etiquetado
   se lo vuelve a colocar. ¿Por qué un resultado así **no** demuestra que el
   método vaya a funcionar con una molécula nueva?
 
-## A2. El caso central: el mejor score en el lugar equivocado (12 min)
+## A2. El caso central: el mejor score en el lugar equivocado
 
 Cambiar el blanco a **"EGFR kinase domain"** y elegir **"Erlotinib"** (también
 *redocked*: 1M17 es su propio cristal).
@@ -109,7 +111,7 @@ Cambiar el blanco a **"EGFR kinase domain"** y elegir **"Erlotinib"** (también
   lista de ligandos, contar cuántos llevan la etiqueta roja **"top pose off"**
   en este blanco.
 
-## A3. ¿Y si buscamos más? (5 min)
+## A3. ¿Y si buscamos más?
 
 Sin cambiar de ligando, pasar el selector **"Docking setup"** de
 **"Standard, 24 A, exh 8"** a **"Standard box, exh 32"**. El parámetro
@@ -126,7 +128,7 @@ Sin cambiar de ligando, pasar el selector **"Docking setup"** de
 - b) Escribir en una frase en qué caso **sí** esperarían que aumentar
   *exhaustiveness* cambie el resultado.
 
-## A4. La caja: el error que no se puede recuperar (8 min)
+## A4. La caja: el error que no se puede recuperar
 
 Activar en **"Display"** la casilla **"Search box"** para ver el volumen de
 búsqueda. Probar sobre el mismo ligando los setups **"Tight box, 18 A"**,
@@ -151,7 +153,7 @@ búsqueda. Probar sobre el mismo ligando los setups **"Tight box, 18 A"**,
   (**"Blind, whole protein"**), que no necesita saber dónde está el sitio?
 - c) ¿Por qué una caja demasiado chica puede ser tan mala como una mal centrada?
 
-## A5. Cambiar la función de puntuación (7 min)
+## A5. Cambiar la función de puntuación
 
 Volver a **"EGFR kinase domain"** / **"Erlotinib"** y elegir el setup
 **"Vinardo scoring"**. Vinardo usa **exactamente la misma búsqueda** que Vina:
@@ -172,7 +174,7 @@ lo único que cambia es cómo se puntúan las poses encontradas.
 - c) Revisar también **"Lapatinib"** y **"Neratinib"** con Vinardo. ¿Mejora
   *todos* los ligandos? ¿Qué dice esto sobre "elegir la mejor función"?
 
-## A6. Una molécula de agua (8 min)
+## A6. Una molécula de agua
 
 Blanco **"HIV-1 protease"**. Todos los setups anteriores se corrieron con el
 receptor **sin aguas**, que es la práctica habitual. El setup
@@ -196,7 +198,7 @@ Comparar **"Standard, 24 A, exh 8"** contra **"Standard + flap water"**:
   directamente los NH de los *flaps*. Proponer una explicación física.
 - c) ¿Por qué EGFR no tiene versión "con agua" en esta app?
 
-## A7. ¿El score predice la potencia? (5 min)
+## A7. ¿El score predice la potencia?
 
 Blanco **"HIV-1 protease"**, setup **"Standard, 24 A, exh 8"**. El panel derecho
 muestra, para cada ligando, el dato experimental **"Experimental Ki / IC₅₀"**.
@@ -222,7 +224,7 @@ Completar y **ordenar las dos columnas por separado**:
 
 ---
 
-# PARTE B — Pestaña "Design" (35 min)
+# PARTE B — Pestaña "Design"
 
 Pasar a la pestaña **"Design"**. La app deja de comparar fármacos conocidos y
 pasa a construirlos: sobre el núcleo **4-anilinoquinazolina** —el esqueleto que
@@ -247,7 +249,7 @@ las cuatro insignias de Lipinski (**MW≤500, logP≤5, HBD≤5, HBA≤10**), ve
 rojas. El visor 3D del bolsillo queda arriba a la izquierda y tiene un botón
 **"Expand"** para verlo a pantalla completa.
 
-## B1. Dibujar un fármaco real (5 min)
+## B1. Dibujar un fármaco real
 
 1. Partir del núcleo desnudo (R1 = *hydrogen*, R2 = *hydrogen*).
 2. Seleccionar el vector **R1** y elegir **ethynyl** en la galería.
@@ -261,7 +263,7 @@ rojas. El visor 3D del bolsillo queda arriba a la izquierda y tiene un botón
 - c) Mirar el panel **"Properties"**: ¿cuánto cambió el peso molecular respecto
   del núcleo desnudo?
 
-## B2. Explorar un vector por vez (8 min)
+## B2. Explorar un vector por vez
 
 Volver R2 a *hydrogen* y dejar **solo R1** variando. Usar los botones de sugerencia
 (**"Make it bigger here"**, **"Something greasier"**, **"Something more polar"**)
@@ -280,12 +282,12 @@ Probar al menos: *fluoro*, *methyl*, *ethynyl*, *cyclopropyl*, *phenyl*, *methox
 - d) Activar **"Pocket residues, by H-bond role"** en el panel del visor. Buscar
   **Thr766** y **Lys721**. ¿Qué tipo de grupo convendría apuntar hacia cada uno?
 
-## B3. Docking de análogos propios (10 min)
+## B3. Docking de análogos propios
 
 Elegir **cuatro** análogos: dos que crean buenos y dos que crean malos.
-Para cada uno, apretar **"Dock this analog"** (la barra de progreso muestra las
-tres etapas reales del cálculo) y anotar el resultado. El botón **"Instant"**
-saltea la animación.
+Para cada uno, apretar **"Dock this analog"** y anotar el resultado. La espera
+de cuatro segundos no es decorativa: la barra muestra las tres etapas reales del
+cálculo.
 
 **Antes de docar cada uno, escribir la predicción.** Los scores quedan visibles
 en las tarjetas de la galería para comparar.
@@ -314,7 +316,7 @@ Referencias obligatorias para comparar:
   que el error típico de estas funciones ronda 1–2 kcal/mol, ¿qué se puede
   afirmar honestamente al ordenar esta serie por score?
 
-## B4. Eficiencia de ligando (7 min)
+## B4. Eficiencia de ligando
 
 El score casi siempre premia a la molécula más grande: más átomos, más contactos.
 La **eficiencia de ligando** corrige eso:
@@ -337,7 +339,7 @@ figura en **"Properties"**, e incluir estas dos referencias:
 - b) En una campaña real se parte de fragmentos pequeños con buena LE y se crece
   desde ahí. ¿Qué justifica esa estrategia, a la luz de lo que acaban de calcular?
 
-## B5. El costo de crecer (5 min)
+## B5. El costo de crecer
 
 Construir R1 = *phenyl* + R2 = *3-morpholinopropoxy* y mirar el panel
 **"Properties"** junto con el indicador de reglas de Lipinski.
@@ -358,7 +360,7 @@ Construir R1 = *phenyl* + R2 = *3-morpholinopropoxy* y mirar el panel
 
 ---
 
-## Cierre y discusión (10 min)
+## Cierre y discusión
 
 Escribir, en no más de tres renglones cada una, las conclusiones de la clase:
 

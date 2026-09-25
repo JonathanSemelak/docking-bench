@@ -125,18 +125,17 @@ def table(header, rows, widths, style=None):
     t.setStyle(style or GRID)
     return t
 
-def act(code, title, mins):
-    """Encabezado de actividad: codigo | titulo | minutos."""
+def act(code, title, mins=None):
+    """Encabezado de actividad: codigo | titulo."""
     badge = Paragraph('<font face="DJMB" size="8.6" color="#2B6CAB">%s</font>' % code, cell)
-    t = Table([[badge, Paragraph(title, hact),
-                Paragraph('<font face="DJM" size="8" color="#8497A9">%s min</font>' % mins, cell)]],
-              colWidths=[26, CW - 26 - 42, 42], hAlign="LEFT")
+    t = Table([[badge, Paragraph(title, hact)]],
+              colWidths=[26, CW - 26], hAlign="LEFT")
     t.setStyle(TableStyle([
         ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
         ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
         ("TOPPADDING",(0,0),(-1,-1),1), ("BOTTOMPADDING",(0,0),(-1,-1),3),
         ("BACKGROUND",(0,0),(0,0), MESHBG), ("BOX",(0,0),(0,0),0.5,MESHED),
-        ("ALIGN",(0,0),(0,0),"CENTER"), ("ALIGN",(2,0),(2,0),"RIGHT"),
+        ("ALIGN",(0,0),(0,0),"CENTER"),
         ("LEFTPADDING",(1,0),(1,0),8),
     ]))
     return t
@@ -176,22 +175,24 @@ story = []
 A = story.append
 
 # ---- portada / encabezado
-A(Paragraph("GUÍA DE ACTIVIDADES · TRABAJO EN PAREJAS", eyebrow))
+A(Paragraph("UNIVERSIDAD SIGLO 21 · GUÍA DE ACTIVIDADES", eyebrow))
+A(Paragraph("Team teaching «Diseñá tu propio fármaco»",
+            S("tt", fontName="DJB", fontSize=12, leading=15, textColor=MESH, spaceAfter=7)))
 A(Paragraph("Docking molecular:<br/>lo que el score no dice", h1))
-A(Paragraph("Noventa minutos sobre resultados %s de AutoDock Vina 1.2.5, en dos blancos "
-            "terapéuticos. Nada acá está simulado ni maquillado: los casos que funcionan y "
-            "los que fracasan son los que dio el programa." % b("reales"),
+A(Paragraph("Resultados %s de AutoDock Vina 1.2.5 sobre dos blancos terapéuticos. Nada acá está "
+            "simulado ni maquillado: los casos que funcionan y los que fracasan son los que dio "
+            "el programa." % b("reales"),
             S("lede", fontSize=10, leading=14.5, textColor=MUTED, spaceAfter=10)))
 
-A(table(["Duración", "Blancos", "Ligandos", "App"],
-        [[Paragraph("90 minutos", cell), Paragraph(num("1HSG · 1M17"), cell),
+A(table(["Blancos", "Ligandos", "App"],
+        [[Paragraph(num("1HSG · 1M17"), cell),
           Paragraph("20 inhibidores + 96 análogos", cell),
           Paragraph('<link href="https://jonathansemelak.github.io/docking-bench/">'
                     '<font color="#2B6CAB">jonathansemelak.github.io/docking-bench</font></link>', cell)]],
-        [70, 80, 150, CW - 300]))
+        [90, 160, CW - 250]))
 A(sp(9))
 
-A(table(["Pareja / grupo", "Fecha"],
+A(table(["Estudiantes", "Fecha"],
         [[Field("pareja", 250), Field("fecha", CW - 250 - 12 - 4)]],
         [250 + 12, CW - 250 - 12]))
 A(sp(9))
@@ -252,7 +253,7 @@ A(Paragraph("En el visor 3D: %s = pose calculada (%s) · %s = pose cristalográf
 # =============================================================== PARTE A
 A(sp(14)); A(Rule(CW, 2.5, MESH))
 A(Paragraph("Parte A · Pestaña %s" % ui("Pose"), hpart))
-A(Paragraph(num("45 min") + " — siete actividades sobre fármacos ya conocidos", small))
+A(Paragraph("Siete actividades sobre fármacos ya conocidos", small))
 A(sp(6))
 
 A(callout("Orientación rápida", [
@@ -412,7 +413,7 @@ for q in qs([("a", "¿Coinciden los dos ordenamientos? Comparar en particular %s
 # =============================================================== PARTE B
 A(sp(14)); A(Rule(CW, 2.5, MESH))
 A(Paragraph("Parte B · Pestaña %s" % ui("Design"), hpart))
-A(Paragraph(num("35 min") + " — de comparar fármacos a construirlos", small))
+A(Paragraph("De comparar fármacos a construirlos", small))
 A(sp(6))
 A(Paragraph("Sobre el núcleo %s —el esqueleto que comparten erlotinib y gefitinib— se cuelgan "
             "sustituyentes en dos posiciones. Leer el panel %s: los dos vectores apuntan en "
@@ -474,10 +475,10 @@ A(sp(10))
 # ---- B3
 A(act("B3", "Docking de análogos propios", 10))
 A(Paragraph("Elegir %s análogos: dos que crean buenos y dos que crean malos. Para cada uno, apretar "
-            "%s (la barra de progreso muestra las tres etapas reales del cálculo) y anotar el "
-            "resultado; %s saltea la animación. %s Los scores quedan visibles en las tarjetas de la "
-            "galería para comparar."
-            % (b("cuatro"), ui("Dock this analog"), ui("Instant"),
+            "%s y anotar el resultado. La espera de cuatro segundos no es decorativa: la barra "
+            "muestra las tres etapas reales del cálculo. %s Los scores quedan visibles en las "
+            "tarjetas de la galería para comparar."
+            % (b("cuatro"), ui("Dock this analog"),
                b("Antes de docar cada uno, escribir la predicción.")), body))
 A(table(["#", "R1", "R2", "Predicción (mejor / peor que erlotinib)", "Score"], [
     [Paragraph(num(str(k)), cell), Field("b3r1%d" % k, 78), Field("b3r2%d" % k, 96),
@@ -491,8 +492,8 @@ A(table(["Referencia", "R1", "R2", "Score"], [
 ], [CW - 100 - 140 - 104, 100, 140, 104]))
 A(sp(5))
 A(callout("Subir a la planilla de clase", [
-    "Pasar las cuatro filas a la planilla compartida, una fila por análogo, con el nombre de la "
-    "pareja que pusieron en la primera página:",
+    "Pasar las cuatro filas a la planilla compartida, una fila por análogo, con los nombres "
+    "que pusieron en la primera página:",
     '<link href="https://docs.google.com/spreadsheets/d/1Yv7o8EZ0DfMaYWOfijEJVUX4r5ZJUb-0d1eXeOj7Do0/edit">'
     '<font face="DJM" size="8" color="#2B6CAB">docs.google.com/spreadsheets/d/1Yv7o8EZ0Df…</font></link>',
 ]))
@@ -546,7 +547,6 @@ for q in qs([("a", "¿Qué aviso aparece y a partir de qué peso molecular? ¿Qu
 # =============================================================== CIERRE
 A(sp(14)); A(Rule(CW, 2.5, MESH))
 A(Paragraph("Cierre y discusión", hpart))
-A(Paragraph(num("10 min"), small))
 A(sp(6))
 A(Paragraph("Escribir, en no más de tres renglones cada una, las conclusiones de la clase:", body))
 A(sp(3))
@@ -582,7 +582,7 @@ A(Paragraph("• La etiqueta verde %s junto a un score indica que es un cálculo
 def deco(canv, doc):
     canv.saveState()
     canv.setFont("DJ", 7.2); canv.setFillColor(DIM)
-    canv.drawString(LM, BM - 9, "Docking molecular · guía de actividades")
+    canv.drawString(LM, BM - 9, "Diseñá tu propio fármaco · Universidad Siglo 21")
     canv.drawRightString(PW - RM, BM - 9, "%d" % doc.page)
     canv.setStrokeColor(RULE); canv.setLineWidth(0.5)
     canv.line(LM, BM - 3, PW - RM, BM - 3)
