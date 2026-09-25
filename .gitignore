@@ -1,3 +1,9 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# Clave docente: el PDF dice "No repartir a los estudiantes" y el repo es
+# publico, asi que se queda fuera. Cualquier cosa commiteada aca queda
+# servida en jonathansemelak.github.io, con boton o sin boton.
+GUIA-ACTIVIDADES-CLAVE.pdf
+*CLAVE*.pdf

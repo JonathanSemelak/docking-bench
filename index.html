@@ -161,6 +161,15 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
   font-size:12.5px;color:var(--muted);line-height:1.5
 }
 .warn b{color:var(--neg);font-family:var(--cond);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;display:block;margin-bottom:3px}
+.guide{
+  font-family:var(--cond);font-weight:600;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;padding:6px 13px;color:var(--pos);text-decoration:none;
+  border:1px solid rgba(79,191,139,.4);border-radius:2px;flex:none;align-self:center;
+  display:inline-flex;align-items:center;gap:7px;margin-left:18px
+}
+.guide:hover{background:rgba(79,191,139,.1);border-color:var(--pos)}
+.guide .arr{font-size:13px;line-height:1}
+
 .demo-tag{
   font-family:var(--mono);font-size:10.5px;color:var(--amber);
   border:1px solid rgba(224,164,88,.35);padding:2px 7px;border-radius:2px;
@@ -369,6 +378,9 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
       <button class="mode" id="mPose" aria-pressed="true">Pose</button>
       <button class="mode" id="mDesign" aria-pressed="false">Design</button>
     </div>
+    <a class="guide" id="guideLink" href="./GUIA-ACTIVIDADES.pdf" download
+       title="Guia de actividades en PDF (formulario rellenable)">
+       <span class="arr">↓</span>Guía de actividades</a>
     <div class="tabs" id="tabs" role="tablist"></div>
     <span class="demo-tag" id="dataTag">demo data</span>
   </header>
