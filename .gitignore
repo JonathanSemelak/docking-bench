@@ -7,3 +7,5 @@ __pycache__/
 # servida en jonathansemelak.github.io, con boton o sin boton.
 GUIA-ACTIVIDADES-CLAVE.pdf
 *CLAVE*.pdf
+GUIA-ACTIVIDADES-CLAVE.md
+build_clave_pdf.py
