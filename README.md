@@ -14,6 +14,10 @@ and nothing to compute at runtime.
 | `index.html` + `data.json` | The same app, split. Use this for hosting and for swapping in your own data. |
 | `analogs.json` | 96 precomputed analogs of the quinazoline core. |
 | `pipeline/` | Everything needed to regenerate `data.json` from real Vina runs. See its own README. |
+| `GUIA-ACTIVIDADES.md` | A 90-minute classroom activity guide, in Spanish, covering both tabs. |
+| `GUIA-ACTIVIDADES-CLAVE.md` | The answer key for it. Every number checked against the dataset. Do not hand out. |
+| `GUIA-ACTIVIDADES.pdf` | The same guide as a fillable PDF form — students type into it and save. |
+| `build_guia_pdf.py` | Regenerates that PDF. Needs `reportlab`. |
 
 `data.json` is produced by `pipeline/`, which is in this repo and runs offline
 once prepared. `analogs.json` was built by an RDKit enumeration script that is
@@ -119,6 +123,30 @@ into the wrong receptor conformation is one of the standard ways docking fails,
 and the back-pocket contacts (Lys721, Glu738) make it visible.
 
 
+## Classroom guide (Spanish)
+
+[`GUIA-ACTIVIDADES.md`](GUIA-ACTIVIDADES.md) is a ready-to-run 90-minute activity
+guide in Spanish: 45 minutes in the Pose tab, 35 in Design, 10 to close. It walks
+students from the indinavir control through the erlotinib scoring failure, the
+mis-centred box, Vinardo, the flap water, and the score-versus-potency table,
+then has them build erlotinib from the bare core and dock their own analogs.
+
+[`GUIA-ACTIVIDADES-CLAVE.md`](GUIA-ACTIVIDADES-CLAVE.md) is the teacher's copy:
+every expected value, the discussion answers, a timing plan, and the objections
+that come up in the room. All of its numbers were read out of `data.json` and
+`analogs.json` rather than remembered, so regenerating the data means rechecking
+the key.
+
+The guide quotes every button and column label in English, as they appear in the
+app, so nothing has to be translated in the room.
+
+`GUIA-ACTIVIDADES.pdf` is the same guide as a **fillable PDF form**: 101 named
+text fields, so students type their numbers straight into it in Acrobat Reader,
+macOS Preview or the browser's own viewer, and save a copy. Field names match the
+input ids of the HTML version, so the two stay in step. Regenerate it with
+`python3 build_guia_pdf.py` after editing — the script holds its own copy of the
+text and does not read the markdown.
+
 ## Design mode
 
 The second tab turns the same pocket into a medicinal-chemistry exercise.
@@ -184,12 +212,11 @@ to check.
 
 ### The Dock button
 
-Design mode has a **Dock this analog** button with a progress bar, and an
-**Instant** button next to it that skips straight to the answer. Use Instant
-while you are still drafting; use the animated one in front of students, where
-the four-second pause doing "Generating conformers / Searching the pocket /
+Design mode has a **Dock this analog** button with a progress bar. The
+four-second pause doing "Generating conformers / Searching the pocket /
 Scoring poses" is doing real pedagogical work — it is the only moment in the
-lesson that conveys docking costs something.
+lesson that conveys docking costs something, which is why there is no way to
+skip it.
 
 The score is honest about itself. If an analog in `analogs.json` has a `score`
 field, that number is shown with a green **vina** tag. If it does not, the app

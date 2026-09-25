@@ -483,7 +483,6 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
         </div>
         <div class="dockrow">
           <button class="btn" id="btnDock">Dock this analog</button>
-          <button class="btn ghost" id="btnDockNow" title="Skip the animation">Instant</button>
         </div>
         <div class="prog" id="prog"><i></i></div>
         <div class="progLabel" id="progLabel"></div>
@@ -1281,7 +1280,7 @@ function finishDock(k){
   var s=scoreFor(k), a=AN.analogs[k];
   DOCKED[k]={score:s.v, le:-s.v/a.heavy, real:s.real};
   DOCKING=false;
-  $('#btnDock').disabled=false; $('#btnDockNow').disabled=false;
+  $('#btnDock').disabled=false;
   $('#progLabel').textContent='';
   $('#prog').classList.remove('on');
   $('#prog').querySelector('i').style.width='0';
@@ -1298,13 +1297,12 @@ function finishDock(k){
   if(mProtein) drawLigand(true);
 }
 
-function doDock(instant){
+function doDock(){
   if(DOCKING) return;
   var k=akey(R1,R2);
-  if(instant){ finishDock(k); return; }
   DOCKING=true;
   $('#prog').classList.add('on');
-  $('#btnDock').disabled=true; $('#btnDockNow').disabled=true;
+  $('#btnDock').disabled=true;
   var bar=$('#prog').querySelector('i'), i=0;
   var step=function(){
     if(i>=STAGES.length){ finishDock(k); return }
@@ -1467,8 +1465,7 @@ Promise.all([load(),loadAnalogs()]).then(function(res){
   $('#btnExpand').onclick=function(){ setFullscreen(true) };
   $('#btnFsClose').onclick=function(){ setFullscreen(false) };
   document.addEventListener('keydown',function(e){ if(e.key==='Escape' && FS) setFullscreen(false) });
-  $('#btnDock').onclick=function(){ doDock(false) };
-  $('#btnDockNow').onclick=function(){ doDock(true) };
+  $('#btnDock').onclick=function(){ doDock() };
   bindToggle('#tRef','ref'); bindToggle('#tPocket','pocket');
   bindToggle('#tBox','box'); bindToggle('#tSurf','surf');
   bindToggle('#dPocket','pocket'); bindToggle('#dSurf','surf');
