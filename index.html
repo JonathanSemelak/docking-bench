@@ -163,8 +163,11 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
 .warn b{color:var(--neg);font-family:var(--cond);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;display:block;margin-bottom:3px}
 .demo-tag{
   font-family:var(--mono);font-size:10.5px;color:var(--amber);
-  border:1px solid rgba(224,164,88,.35);padding:2px 7px;border-radius:2px
+  border:1px solid rgba(224,164,88,.35);padding:2px 7px;border-radius:2px;
+  flex:none;align-self:center;opacity:.75
 }
+/* en design mode los tabs se ocultan con visibility, así que siguen ocupando
+   su ancho y el tag no salta de lugar al cambiar de pestaña */
 
 /* ================= design mode ================= */
 .modes{display:flex;gap:2px;margin-left:18px}
@@ -362,12 +365,12 @@ tbody tr[aria-current=true] td:first-child{box-shadow:inset 2px 0 0 var(--mesh)}
 <div class="app">
   <header>
     <h1>Docking <span>Bench</span></h1>
-    <span class="demo-tag" id="dataTag">demo data</span>
     <div class="modes">
       <button class="mode" id="mPose" aria-pressed="true">Pose</button>
       <button class="mode" id="mDesign" aria-pressed="false">Design</button>
     </div>
     <div class="tabs" id="tabs" role="tablist"></div>
+    <span class="demo-tag" id="dataTag">demo data</span>
   </header>
 
   <div class="intro" id="poseIntro"><b>Known binders</b><span id="poseIntroText"></span></div>
